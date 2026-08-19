@@ -23,6 +23,12 @@ enum layers {
     _SYS,   // right outer thumb (hold)  -> media, F-keys, bootloader
 };
 
+// Custom keycodes. TRIPLE_GRV reproduces the Glove80's triple_backtick macro
+// (markdown code fence) that lived at the top-left of the Symbol layer.
+enum custom_keycodes {
+    TRIPLE_GRV = SAFE_RANGE,
+};
+
 // Home-row mods (GACS). Left hand uses left-side mods, right hand right-side.
 #define HM_A LGUI_T(KC_A)
 #define HM_S LALT_T(KC_S)
@@ -49,12 +55,16 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             TH_NUM,  TH_NAV,      TH_SYM,  TH_SYS
     ),
 
-    // Symbols. Hold right-inner thumb (Space); press a symbol with either hand.
+    // Symbols. Faithful mirror of the Glove80 "Glorious Engrammer" Symbol layer:
+    // left hand types symbols while the right thumb holds Space; the right hand
+    // keeps whitespace/editing keys. The Glove80's 6th (bottom) row has no home
+    // on the 4-row Voyager, so its five orphaned symbols (@ % & + :) are rescued
+    // onto the otherwise-empty right half of the number row.
     [_SYM] = LAYOUT_voyager(
-        _______, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
-        _______, KC_EXLM, KC_AT,   KC_HASH, KC_DLR,  KC_PERC,     KC_TILD, KC_GRV,  KC_PIPE, KC_BSLS, KC_SLSH, _______,
-        _______, KC_AMPR, KC_ASTR, KC_LPRN, KC_RPRN, KC_CIRC,     KC_LABK, KC_RABK, KC_COLN, KC_SCLN, KC_DQUO, KC_QUOT,
-        _______, KC_PLUS, KC_EQL,  KC_LCBR, KC_RCBR, KC_LBRC,     KC_RBRC, KC_MINS, KC_UNDS, _______, _______, _______,
+        TRIPLE_GRV, KC_GRV,  KC_LABK, KC_RABK, KC_SCLN, KC_COMM,     KC_AT,   KC_PERC, KC_AMPR, KC_PLUS, KC_COLN, _______,
+        KC_EXLM,    KC_LBRC, KC_LCBR, KC_RCBR, KC_RBRC, KC_QUES,     KC_DOT,  KC_DEL,  LSFT(KC_TAB), KC_INS, KC_ESC, _______,
+        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_COMM, KC_BSPC, KC_ENT,  KC_SPC,  KC_ENT,  _______,
+        KC_TILD,    KC_LPRN, KC_PIPE, KC_MINS, KC_RPRN, KC_SLSH,     KC_SCLN, KC_DQUO, KC_QUOT, KC_GRV,  KC_BSLS, _______,
                                             _______, _______,     _______, _______
     ),
 
@@ -86,6 +96,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             _______, _______,     _______, _______
     ),
 };
+
+// ── Custom keycode handling ─────────────────────────────────────────────────
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == TRIPLE_GRV && record->event.pressed) {
+        SEND_STRING("```");
+        return false;
+    }
+    return true;
+}
 
 // ── Bilateral hold handedness (CHORDAL_HOLD) ────────────────────────────────
 // Marks each physical key's hand. A home-row mod holds only when the following
