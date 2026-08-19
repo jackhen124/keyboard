@@ -43,7 +43,8 @@ thumbs: L-outer  L-inner  R-inner  R-outer
 Keep each layer at 52 arguments or the build fails. Commit + push and the
 workflow rebuilds automatically.
 
-> Note: this is an approximation of the Glorious Engrammer, not a 1:1 clone —
-> standard GACS home-row mods and 4 thumb layers, without Sunaku's per-finger
-> timing / magic key / emoji layers. See `../oryx-tricky-features.md` for the
-> gaps.
+> Note: this is an approximation of the Glorious Engrammer, not a 1:1 clone.
+> The home-row mods ARE close to Sunaku's — bilateral holds (`CHORDAL_HOLD`),
+> prior-idle gating (`FLOW_TAP_TERM`), and per-finger tapping terms. Still
+> missing: the magic/repeat key and emoji/World layers. See
+> `../oryx-tricky-features.md` for those gaps.

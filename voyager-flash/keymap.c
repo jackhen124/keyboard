@@ -2,8 +2,9 @@
 //
 // This is a STARTING POINT, not a 1:1 clone of Sunaku's ZMK keymap:
 //  - Base alpha rows + number row map 1:1 from the Glove80.
-//  - Home-row mods use standard GACS (GUI/ALT/CTRL/SHIFT) instead of Sunaku's
-//    custom per-finger behaviors.
+//  - Home-row mods use GACS (GUI/ALT/CTRL/SHIFT) with Sunaku-style misfire
+//    proofing: bilateral holds (CHORDAL_HOLD), prior-idle gating (FLOW_TAP_TERM),
+//    and per-finger tapping terms. See config.h and the two functions below.
 //  - 4 thumb keys carry the 4 most useful layers (Sym/Num/Nav/Sys).
 //  - The remaining Glove80 layers (Mouse, Emoji, World, Function, etc.) are not
 //    ported; add what you use by editing the layers below.
@@ -85,3 +86,29 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             _______, _______,     _______, _______
     ),
 };
+
+// ── Bilateral hold handedness (CHORDAL_HOLD) ────────────────────────────────
+// Marks each physical key's hand. A home-row mod holds only when the following
+// key is on the opposite hand; same-hand rolls stay taps. Thumbs are '*'
+// (exempt) so their layer-holds always fire, even with same-hand keys.
+const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyager(
+    'L', 'L', 'L', 'L', 'L', 'L',     'R', 'R', 'R', 'R', 'R', 'R',
+    'L', 'L', 'L', 'L', 'L', 'L',     'R', 'R', 'R', 'R', 'R', 'R',
+    'L', 'L', 'L', 'L', 'L', 'L',     'R', 'R', 'R', 'R', 'R', 'R',
+    'L', 'L', 'L', 'L', 'L', 'L',     'R', 'R', 'R', 'R', 'R', 'R',
+                        '*', '*',     '*', '*'
+);
+
+// ── Per-finger tapping terms (TAPPING_TERM_PER_KEY) ─────────────────────────
+// Slow fingers (pinky) get more time before a hold counts; fast fingers (index)
+// get less. Mirrors Sunaku's per-position holding times. Thumbs and everything
+// else fall through to the global TAPPING_TERM.
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case HM_A:  case HM_SC:  return 260;  // pinky
+        case HM_S:  case HM_L:   return 220;  // ring
+        case HM_D:  case HM_K:   return 190;  // middle
+        case HM_F:  case HM_J:   return 170;  // index
+        default:                 return TAPPING_TERM;
+    }
+}
