@@ -1,0 +1,44 @@
+name: Build Voyager firmware
+
+on:
+  push:
+    paths:
+      - "voyager-flash/**"
+      - ".github/workflows/build-voyager.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ghcr.io/qmk/qmk_cli
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          path: repo
+
+      - name: Avoid git "dubious ownership" errors
+        run: git config --global --add safe.directory '*'
+
+      - name: Clone QMK firmware (with submodules)
+        run: qmk setup -y -H /qmk_firmware qmk/qmk_firmware
+
+      - name: Install this keymap
+        run: |
+          KMDIR=/qmk_firmware/keyboards/zsa/voyager/keymaps/jack
+          mkdir -p "$KMDIR"
+          cp repo/voyager-flash/keymap.c repo/voyager-flash/config.h repo/voyager-flash/rules.mk "$KMDIR/"
+
+      - name: Compile
+        run: |
+          cd /qmk_firmware
+          qmk compile -kb zsa/voyager -km jack
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voyager-jack-firmware
+          path: |
+            /qmk_firmware/*.bin
+            /qmk_firmware/*.hex
+          if-no-files-found: error
