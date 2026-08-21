@@ -44,7 +44,7 @@ enum custom_keycodes {
 //   whichever one the thumb lands on sends Bspc; right thumbs keep Space/Enter.
 //   (Del still lives on the Nav and Sym layers.)
 #define TH_NAV LT(_NAV,   KC_BSPC)  // L-outer: tap Bspc,  hold Cursor/Nav
-#define TH_NUM LT(_NUM,   KC_BSPC)  // L-inner: tap Bspc,  hold Number
+#define TH_NUM LT(_NUM,   KC_DEL)  // L-inner: tap Del,  hold Number
 #define TH_MOU LT(_MOUSE, KC_SPC)   // R-inner: tap Space, hold Mouse
 #define TH_SYM LT(_SYM,   KC_ENT)   // R-outer: tap Enter, hold Symbol
 
