@@ -134,19 +134,6 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
                         '*', '*',     '*', '*'
 );
 
-// ── Per-finger tapping terms (TAPPING_TERM_PER_KEY) ─────────────────────────
-// Slow fingers (pinky) get more time before a hold counts; fast fingers (index)
-// get less. Mirrors Sunaku's per-position holding times. Thumbs and everything
-// else fall through to the global TAPPING_TERM.
-uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
-    switch (keycode) {
-        case HM_A:  case HM_SC:  case NM_F1:  return 260;  // pinky (incl. NUM A)
-        case HM_S:  case HM_L:   return 220;  // ring
-        case HM_D:  case HM_K:   return 190;  // middle
-        case HM_F:  case HM_J:   return 170;  // index
-        case NM_F2:              return 220;  // NUM ring   (S)
-        case NM_F3:              return 190;  // NUM middle (D)
-        case NM_F4:              return 170;  // NUM index  (F)
-        default:                 return TAPPING_TERM;
-    }
-}
+// Tapping term is a single global value (see TAPPING_TERM in config.h); there is
+// no per-finger override. PERMISSIVE_HOLD + CHORDAL_HOLD, not a longer term, are
+// what keep slow-finger holds reliable.
