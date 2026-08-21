@@ -45,16 +45,16 @@ enum custom_keycodes {
 //   (Del still lives on the Nav and Sym layers.)
 #define TH_NAV LT(_NAV,   KC_BSPC)  // L-outer: tap Bspc,  hold Cursor/Nav
 #define TH_NUM LT(_NUM,   KC_DEL)  // L-inner: tap Del,  hold Number
-#define TH_MOU LT(_MOUSE, KC_SPC)   // R-inner: tap Space, hold Mouse
-#define TH_SYM LT(_SYM,   KC_ENT)   // R-outer: tap Enter, hold Symbol
+#define TH_MOU LT(_MOUSE, KC_TAB)   // R-inner: tap Space, hold Mouse
+#define TH_SYM LT(_SYM,   KC_SPC)   // R-outer: tap Enter, hold Symbol
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_BASE] = LAYOUT_voyager(
-        KC_EQL,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
-        KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
-        KC_ESC,  HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
-        KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
+        KC_EQL,   KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
+        _______,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
+        KC_ESC,   HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
+        KC_LSFT,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
                                             TH_NAV,  TH_NUM,      TH_MOU,  TH_SYM
     ),
 
