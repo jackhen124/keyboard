@@ -8,7 +8,12 @@
 // before a tap is mistaken for a hold. With PERMISSIVE_HOLD (below) this term
 // only governs LONE holds; any hold-then-key chord resolves on the next press.
 #define TAPPING_TERM 170
-#define QUICK_TAP_TERM 0          // no auto-repeat on tap-then-hold (essential for HRMs)
+// Tap-then-hold auto-repeat. If you re-press a tap-hold key within this window
+// of tapping it, the second press is a real tap you can hold to auto-repeat
+// (held Backspace to bulk-delete, held Space, etc.) — matching the Glove80's
+// *_REPEAT_DECAY. 120 ms is short enough that a deliberate hold-for-mod after a
+// pause still registers as the hold, so HRMs are unaffected.
+#define QUICK_TAP_TERM 120
 
 // Bilateral holds. A home-row mod engages only if the NEXT key is on the
 // OPPOSITE hand; same-hand rolls (sd, df, as…) stay letters. This is Sunaku's
