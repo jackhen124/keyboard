@@ -45,8 +45,8 @@ enum custom_keycodes {
 //   (Del still lives on the Nav and Sym layers.)
 #define TH_NAV LT(_NAV,   KC_BSPC)  // L-outer: tap Bspc,  hold Cursor/Nav
 #define TH_NUM LT(_NUM,   KC_DEL)  // L-inner: tap Del,  hold Number
-#define TH_MOU LT(_MOUSE, KC_TAB)   // R-inner: tap Space, hold Mouse
-#define TH_SYM LT(_SYM,   KC_SPC)   // R-outer: tap Enter, hold Symbol
+#define TH_MOU LT(_MOUSE, KC_TAB)   // R-inner: tap tab, hold Mouse
+#define TH_SYM LT(_SYM,   KC_SPC)   // R-outer: tap space, hold Symbol
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -74,10 +74,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Numpad on the right hand, F1-F12 on the left. Hold left-inner thumb (Bspc).
     [_NUM] = LAYOUT_voyager(
         _______, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
-        _______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,      KC_7,    KC_8,    KC_9,    KC_PLUS, KC_ASTR, _______,
-        _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,       KC_4,    KC_5,    KC_6,    KC_MINS, KC_SLSH, _______,
-        _______, KC_F6,   KC_F12,  _______, _______, _______,     KC_1,    KC_2,    KC_3,    KC_EQL,  KC_DOT,  _______,
-                                            _______, _______,     KC_0,    _______
+        _______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,      _______, KC_7,    KC_8,    KC_9,    KC_PLUS, KC_ASTR, 
+        _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,       _______, KC_4,    KC_5,    KC_6,    KC_MINS, KC_SLSH, 
+        _______, KC_F6,   KC_F12,  _______, _______, _______,     _______, KC_1,    KC_2,    KC_3,    KC_EQL,  KC_DOT, 
+                                            _______, _______,     _______, KC_0    
     ),
 
     // Navigation / cursor on the right hand (vim arrows). Hold left-outer thumb (Del).
@@ -100,7 +100,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______, MS_WHLL,  MS_UP,   MS_WHLR, _______,     MS_WHLL, MS_BTN1, MS_BTN3,      MS_BTN2,      MS_WHLR, _______,
         KC_ESC,  MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, _______, _______,      _______,      KC_APP,  MS_BTN4,
         _______, MS_WHLD, KC_CUT,   KC_COPY, KC_PSTE, MS_WHLD,     MS_WHLD, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  MS_BTN5,
-                                            _______, _______,     _______, _______
+                                             MS_BTN1, MS_BTN2,     _______, _______
     ),
 };
 
