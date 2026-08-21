@@ -73,9 +73,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // on the 4-row Voyager, so its five orphaned symbols (@ % & + :) are rescued
     // onto the otherwise-empty right half of the number row.
     [_SYM] = LAYOUT_voyager(
-        TRIPLE_GRV, KC_GRV,  KC_LABK, KC_RABK, KC_SCLN, KC_COMM,     _____,   KC_PERC, KC_AMPR, KC_PLUS, KC_COLN, _______,
+        TRIPLE_GRV, KC_GRV,  KC_LABK, KC_RABK, KC_SCLN, KC_COMM,     _______, KC_PERC, KC_AMPR, KC_PLUS, KC_COLN, _______,
         KC_EXLM,    KC_LBRC, KC_LCBR, KC_RCBR, KC_RBRC, KC_QUES,     KC_DOT,  KC_DEL,  LSFT(KC_TAB), KC_INS, KC_ESC, _______,
-        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT, KC_BSPC, KC_ENT,  KC_SPC,  KC_ENT,  _______,
+        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT,   KC_BSPC, KC_ENT,  KC_SPC,  KC_ENT,  _______,
         KC_TILD,    KC_LPRN, KC_PIPE, KC_MINS, KC_RPRN, KC_SLSH,     KC_SCLN, KC_DQUO, KC_QUOT, KC_GRV,  KC_BSLS, _______,
                                             _______, _______,     _______, _______
     ),
