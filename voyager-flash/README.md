@@ -20,12 +20,22 @@ folder). It copies these three files into a QMK checkout and compiles them.
 1. **Push** any change under `voyager-flash/` to GitHub (or trigger the
    *Build Voyager firmware* workflow manually from the Actions tab).
 2. Open the **Actions** tab → the latest *Build Voyager firmware* run.
-3. Download the **`voyager-jack-firmware`** artifact (contains the `.bin`).
-4. Flash with **Wally** (https://www.zsa.io/wally):
-   - Put the Voyager into bootloader mode: press the small reset button on the
-     board, **or** hold the `_SYS` layer (right-outer thumb) and tap `QK_BOOT`
-     (top-left key) once this keymap is already running.
-   - In Wally, select the downloaded `.bin` and click flash.
+3. Download the **`voyager-jack-firmware`** artifact. GitHub always hands you a
+   **`.zip`** (that's just how it packages artifacts), so **unzip it** — inside
+   is the actual `zsa_voyager_jack.bin` firmware file. That `.bin` is the thing
+   you flash; the `.zip` itself can't be flashed.
+4. Put the Voyager into **bootloader mode**: press the small reset button on the
+   board, **or** hold the `_SYS` layer (right-outer thumb) and tap `QK_BOOT`
+   (top-left key) once this keymap is already running.
+5. Flash the `.bin` with any **one** flashing tool — you only need one, and the
+   `.bin` never flashes itself:
+   - **Wally** (GUI, https://www.zsa.io/wally): select the unzipped `.bin` and
+     click flash.
+   - **Keymapp** (GUI, https://www.zsa.io/keymapp): ZSA's newer app, same idea.
+   - **zapp** (CLI, https://github.com/zsa/zapp): `zapp flash zsa_voyager_jack.bin`.
+     Optional — only if you prefer the terminal. Note its `zapp flash <url>`
+     shortcut works with **Oryx** URLs, not GitHub artifact links, so you still
+     download + unzip first.
 
 ## Editing the keymap
 

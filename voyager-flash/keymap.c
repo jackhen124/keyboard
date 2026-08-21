@@ -17,10 +17,10 @@
 
 enum layers {
     _BASE = 0,
-    _SYM,   // right inner thumb (hold)  -> type symbols with either hand
-    _NUM,   // left  outer thumb (hold)  -> numpad on right hand, F-keys on left
-    _NAV,   // left  inner thumb (hold)  -> cursor / navigation on right hand
-    _SYS,   // right outer thumb (hold)  -> media, F-keys, bootloader
+    _SYM,    // right outer thumb (hold) -> type symbols with either hand
+    _NUM,    // left  inner thumb (hold) -> numpad on right hand, F-keys on left
+    _NAV,    // left  outer thumb (hold) -> cursor / navigation on right hand
+    _MOUSE,  // right inner thumb (hold) -> pointer move / click / scroll
 };
 
 // Custom keycodes. TRIPLE_GRV reproduces the Glove80's triple_backtick macro
@@ -39,11 +39,14 @@ enum custom_keycodes {
 #define HM_L RALT_T(KC_L)   // RALT = AltGr; swap to LALT_T if that causes issues
 #define HM_SC RGUI_T(KC_SCLN)
 
-// Thumb layer-taps
-#define TH_NUM LT(_NUM, KC_DEL)
-#define TH_NAV LT(_NAV, KC_BSPC)
-#define TH_SYM LT(_SYM, KC_SPC)
-#define TH_SYS LT(_SYS, KC_ENT)
+// Thumb layer-taps. Order across the 4 thumbs (L-outer .. R-outer):
+//   Cursor/Nav, Number, Mouse, Symbol. Both LEFT thumbs tap Backspace so
+//   whichever one the thumb lands on sends Bspc; right thumbs keep Space/Enter.
+//   (Del still lives on the Nav and Sym layers.)
+#define TH_NAV LT(_NAV,   KC_BSPC)  // L-outer: tap Bspc,  hold Cursor/Nav
+#define TH_NUM LT(_NUM,   KC_BSPC)  // L-inner: tap Bspc,  hold Number
+#define TH_MOU LT(_MOUSE, KC_SPC)   // R-inner: tap Space, hold Mouse
+#define TH_SYM LT(_SYM,   KC_ENT)   // R-outer: tap Enter, hold Symbol
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
@@ -52,12 +55,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
         KC_ESC,  HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-                                            TH_NUM,  TH_NAV,      TH_SYM,  TH_SYS
+                                            TH_NAV,  TH_NUM,      TH_MOU,  TH_SYM
     ),
 
     // Symbols. Faithful mirror of the Glove80 "Glorious Engrammer" Symbol layer:
-    // left hand types symbols while the right thumb holds Space; the right hand
-    // keeps whitespace/editing keys. The Glove80's 6th (bottom) row has no home
+    // left hand types symbols while the right-outer thumb (Enter) holds the layer;
+    // the right hand keeps whitespace/editing keys. The Glove80's 6th (bottom) row has no home
     // on the 4-row Voyager, so its five orphaned symbols (@ % & + :) are rescued
     // onto the otherwise-empty right half of the number row.
     [_SYM] = LAYOUT_voyager(
@@ -68,7 +71,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             _______, _______,     _______, _______
     ),
 
-    // Numpad on the right hand, F1-F12 on the left. Hold left-outer thumb (Del).
+    // Numpad on the right hand, F1-F12 on the left. Hold left-inner thumb (Bspc).
     [_NUM] = LAYOUT_voyager(
         _______, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
         _______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,      KC_7,    KC_8,    KC_9,    KC_PLUS, KC_ASTR, _______,
@@ -77,7 +80,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             _______, _______,     KC_0,    _______
     ),
 
-    // Navigation / cursor on the right hand (vim arrows). Hold left-inner thumb (Bspc).
+    // Navigation / cursor on the right hand (vim arrows). Hold left-outer thumb (Del).
     [_NAV] = LAYOUT_voyager(
         _______, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
         _______, _______, _______, _______, _______, _______,     KC_HOME, KC_PGDN, KC_PGUP, KC_END,  KC_DEL,  KC_BSPC,
@@ -86,13 +89,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             _______, _______,     _______, _______
     ),
 
-    // System: media + volume + F-keys, plus QK_BOOT (top-left) to enter bootloader
-    // for flashing with Wally. Hold right-outer thumb (Enter).
-    [_SYS] = LAYOUT_voyager(
-        QK_BOOT, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, EE_CLR,
-        _______, _______, _______, _______, _______, _______,     KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,
-        KC_MPRV, KC_MPLY, KC_MNXT, KC_MUTE, _______, _______,     KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,  KC_F12,
-        KC_VOLD, KC_VOLU, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
+    // Mouse. Ported from the Glove80 "Glorious Engrammer" Mouse layer, collapsed
+    // to a single speed (its slow/fast/warp graded layers have no home here).
+    // Hold right-inner thumb (Space): move the pointer with the LEFT hand
+    // (E=up, S/D/F=left/down/right), click with the RIGHT (U/I/O = L/M/R), scroll
+    // on the outer columns, and cut/copy/paste on Z/X/C. QK_BOOT stays top-left
+    // for entering the bootloader to flash.
+    [_MOUSE] = LAYOUT_voyager(
+        QK_BOOT, _______, _______,  _______, _______, _______,     _______, _______, _______,      _______,      _______, _______,
+        _______, _______, KC_WH_L,  KC_MS_U, KC_WH_R, _______,     KC_WH_L, KC_BTN1, KC_BTN3,      KC_BTN2,      KC_WH_R, _______,
+        KC_ESC,  KC_WH_U, KC_MS_L,  KC_MS_D, KC_MS_R, KC_WH_U,     KC_WH_U, _______, _______,      _______,      KC_APP,  KC_BTN4,
+        _______, KC_WH_D, KC_CUT,   KC_COPY, KC_PSTE, KC_WH_D,     KC_WH_D, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  KC_BTN5,
                                             _______, _______,     _______, _______
     ),
 };
