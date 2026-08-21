@@ -97,9 +97,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // for entering the bootloader to flash.
     [_MOUSE] = LAYOUT_voyager(
         QK_BOOT, _______, _______,  _______, _______, _______,     _______, _______, _______,      _______,      _______, _______,
-        _______, _______, KC_WH_L,  KC_MS_U, KC_WH_R, _______,     KC_WH_L, KC_BTN1, KC_BTN3,      KC_BTN2,      KC_WH_R, _______,
-        KC_ESC,  KC_WH_U, KC_MS_L,  KC_MS_D, KC_MS_R, KC_WH_U,     KC_WH_U, _______, _______,      _______,      KC_APP,  KC_BTN4,
-        _______, KC_WH_D, KC_CUT,   KC_COPY, KC_PSTE, KC_WH_D,     KC_WH_D, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  KC_BTN5,
+        _______, _______, MS_WHLL,  MS_UP,   MS_WHLR, _______,     MS_WHLL, MS_BTN1, MS_BTN3,      MS_BTN2,      MS_WHLR, _______,
+        KC_ESC,  MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, _______, _______,      _______,      KC_APP,  MS_BTN4,
+        _______, MS_WHLD, KC_CUT,   KC_COPY, KC_PSTE, MS_WHLD,     MS_WHLD, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  MS_BTN5,
                                             _______, _______,     _______, _______
     ),
 };
