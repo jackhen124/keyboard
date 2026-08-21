@@ -1,0 +1,48 @@
+name: Draw keymap images
+
+on:
+  push:
+    paths:
+      - "voyager/flash/keymap.c"
+      - "voyager/gen-keymap-images.py"
+      - ".github/workflows/draw-keymap.yml"
+  workflow_dispatch:
+
+# Allow the job to push the regenerated images back to the repo.
+permissions:
+  contents: write
+
+# If several pushes land quickly, only the newest needs to redraw.
+concurrency:
+  group: draw-keymap
+  cancel-in-progress: true
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install keymap-drawer
+        run: pip install keymap-drawer
+
+      - name: Regenerate keymap images
+        run: python voyager/gen-keymap-images.py
+
+      - name: Commit updated images
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add images voyager/voyager.keymap.json
+          if git diff --cached --quiet; then
+            echo "No image changes to commit."
+          else
+            git commit -m "Auto-regenerate keymap images [skip ci]"
+            git push
+          fi

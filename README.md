@@ -22,7 +22,9 @@ keyboard/
 ├── oryx-tricky-features.md      # Glove80/Oryx features not (yet) ported
 ├── voyager-base-layer.md        # notes on the Voyager base layer
 ├── Get-LatestFirmware.ps1       # download the latest CI firmware artifact
-└── .github/workflows/build-voyager.yml
+└── .github/workflows/
+    ├── build-voyager.yml        # CI: compile firmware on keymap changes
+    └── draw-keymap.yml          # CI: redraw images/ + commit them back
 ```
 
 ## Building & flashing the Voyager
@@ -78,8 +80,16 @@ workflow rebuilds automatically.
 ## Keymap images
 
 `voyager/gen-keymap-images.py` parses `voyager/flash/keymap.c` directly (no QMK
-toolchain) and renders one SVG per layer into `images/`. Re-run after editing
-the keymap:
+toolchain) and renders one SVG per layer into `images/`.
+
+**This runs automatically in CI.** The
+**`.github/workflows/draw-keymap.yml`** workflow redraws the images on every
+push that touches `voyager/flash/keymap.c` (or the script) and commits the
+refreshed SVGs back to the repo, so `images/` is always up to date. The
+auto-commit is tagged `[skip ci]` and only changes `images/`, so it never
+retriggers a firmware build.
+
+To preview locally before pushing:
 
 ```
 pip install keymap-drawer          # once
