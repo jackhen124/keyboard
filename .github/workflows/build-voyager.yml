@@ -3,7 +3,7 @@ name: Build Voyager firmware
 on:
   push:
     paths:
-      - "voyager-flash/**"
+      - "voyager/flash/**"
       - ".github/workflows/build-voyager.yml"
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ jobs:
         run: |
           KMDIR=/qmk_firmware/keyboards/zsa/voyager/keymaps/jack
           mkdir -p "$KMDIR"
-          cp repo/voyager-flash/keymap.c repo/voyager-flash/config.h repo/voyager-flash/rules.mk "$KMDIR/"
+          cp repo/voyager/flash/keymap.c repo/voyager/flash/config.h repo/voyager/flash/rules.mk "$KMDIR/"
 
       - name: Compile
         run: |

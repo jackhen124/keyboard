@@ -1,0 +1,267 @@
+layout: {qmk_keyboard: zsa/voyager, layout_name: LAYOUT}
+layers:
+  BASE:
+  - '='
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '9'
+  - '0'
+  - BSPC
+  - {t: ▽, type: trans}
+  - Q
+  - W
+  - E
+  - R
+  - T
+  - Y
+  - U
+  - I
+  - O
+  - P
+  - '-'
+  - ESC
+  - {t: A, h: LGUI}
+  - {t: S, h: LALT}
+  - {t: D, h: LCTL}
+  - {t: F, h: LSFT}
+  - G
+  - H
+  - {t: J, h: RSFT}
+  - {t: K, h: RCTL}
+  - {t: L, h: RALT}
+  - {t: ;, h: RGUI}
+  - ''''
+  - LSFT
+  - Z
+  - X
+  - C
+  - V
+  - B
+  - N
+  - M
+  - ','
+  - .
+  - /
+  - RSFT
+  - {t: BSPC, h: L3}
+  - {t: DEL, h: L2}
+  - {t: TAB, h: L4}
+  - {t: SPC, h: L1}
+  SYM:
+  - TRIPLE GRV
+  - '`'
+  - <
+  - '>'
+  - ;
+  - ','
+  - {t: ▽, type: trans}
+  - '%'
+  - '&'
+  - +
+  - ':'
+  - {t: ▽, type: trans}
+  - '!'
+  - '['
+  - '{'
+  - '}'
+  - ']'
+  - '?'
+  - .
+  - DEL
+  - Sft+TAB
+  - INS
+  - ESC
+  - {t: ▽, type: trans}
+  - '#'
+  - ^
+  - '='
+  - _
+  - $
+  - '*'
+  - '@'
+  - BSPC
+  - ENT
+  - SPC
+  - ENT
+  - {t: ▽, type: trans}
+  - '~'
+  - (
+  - '|'
+  - '-'
+  - )
+  - /
+  - ;
+  - '"'
+  - ''''
+  - '`'
+  - \
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {type: held}
+  NUM:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - F7
+  - F8
+  - F9
+  - F10
+  - F11
+  - {t: ▽, type: trans}
+  - '7'
+  - '8'
+  - '9'
+  - +
+  - '*'
+  - {t: ▽, type: trans}
+  - {t: F1, h: LGUI}
+  - {t: F2, h: LALT}
+  - {t: F3, h: LCTL}
+  - {t: F4, h: LSFT}
+  - F5
+  - {t: ▽, type: trans}
+  - '4'
+  - '5'
+  - '6'
+  - '-'
+  - /
+  - {t: ▽, type: trans}
+  - F6
+  - F12
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - '1'
+  - '2'
+  - '3'
+  - '='
+  - .
+  - {t: ▽, type: trans}
+  - {type: held}
+  - {t: ▽, type: trans}
+  - '0'
+  NAV:
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - HOME
+  - PGDN
+  - PGUP
+  - END
+  - DEL
+  - BSPC
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - LEFT
+  - DOWN
+  - UP
+  - RGHT
+  - CAPS
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - ESC
+  - TAB
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {type: held}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  MOUSE:
+  - QK BOOT
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - MS WHLL
+  - MS UP
+  - MS WHLR
+  - {t: ▽, type: trans}
+  - MS WHLL
+  - MS BTN1
+  - MS BTN3
+  - MS BTN2
+  - MS WHLR
+  - {t: ▽, type: trans}
+  - ESC
+  - MS WHLU
+  - MS LEFT
+  - MS DOWN
+  - MS RGHT
+  - MS WHLU
+  - MS WHLU
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - {t: ▽, type: trans}
+  - APP
+  - MS BTN4
+  - {t: ▽, type: trans}
+  - MS WHLD
+  - CUT
+  - COPY
+  - PSTE
+  - MS WHLD
+  - MS WHLD
+  - F13
+  - Sft+F13
+  - Alt+F13
+  - F16
+  - MS BTN5
+  - MS BTN1
+  - MS BTN2
+  - {type: held}
+  - {t: ▽, type: trans}
