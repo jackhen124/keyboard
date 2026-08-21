@@ -39,6 +39,15 @@ enum custom_keycodes {
 #define HM_L RALT_T(KC_L)   // RALT = AltGr; swap to LALT_T if that causes issues
 #define HM_SC RGUI_T(KC_SCLN)
 
+// NUM-layer home-row mods. The numpad lives on the right hand, so the LEFT
+// home row keeps WIN/ALT/CTRL/SHIFT (tap = F-key, hold = mod), matching the
+// base layer. NAV needs no equivalent: its left home row is transparent, so
+// the base HM_* mod-taps already shine through.
+#define NM_F1 LGUI_T(KC_F1)  // A: tap F1,  hold WIN
+#define NM_F2 LALT_T(KC_F2)  // S: tap F2,  hold ALT
+#define NM_F3 LCTL_T(KC_F3)  // D: tap F3,  hold CTRL
+#define NM_F4 LSFT_T(KC_F4)  // F: tap F4,  hold SHIFT
+
 // Thumb layer-taps. Order across the 4 thumbs (L-outer .. R-outer):
 //   Cursor/Nav, Number, Mouse, Symbol. Both LEFT thumbs tap Backspace so
 //   whichever one the thumb lands on sends Bspc; right thumbs keep Space/Enter.
@@ -75,7 +84,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_NUM] = LAYOUT_voyager(
         _______, _______, _______, _______, _______, _______,     _______, _______, _______, _______, _______, _______,
         _______, KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F11,      _______, KC_7,    KC_8,    KC_9,    KC_PLUS, KC_ASTR, 
-        _______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,       _______, KC_4,    KC_5,    KC_6,    KC_MINS, KC_SLSH, 
+        _______, NM_F1,   NM_F2,   NM_F3,   NM_F4,   KC_F5,       _______, KC_4,    KC_5,    KC_6,    KC_MINS, KC_SLSH,
         _______, KC_F6,   KC_F12,  _______, _______, _______,     _______, KC_1,    KC_2,    KC_3,    KC_EQL,  KC_DOT, 
                                             _______, _______,     _______, KC_0    
     ),
@@ -131,10 +140,13 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
 // else fall through to the global TAPPING_TERM.
 uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case HM_A:  case HM_SC:  return 260;  // pinky
+        case HM_A:  case HM_SC:  case NM_F1:  return 260;  // pinky (incl. NUM A)
         case HM_S:  case HM_L:   return 220;  // ring
         case HM_D:  case HM_K:   return 190;  // middle
         case HM_F:  case HM_J:   return 170;  // index
+        case NM_F2:              return 220;  // NUM ring   (S)
+        case NM_F3:              return 190;  // NUM middle (D)
+        case NM_F4:              return 170;  // NUM index  (F)
         default:                 return TAPPING_TERM;
     }
 }
