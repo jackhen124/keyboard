@@ -144,13 +144,19 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
 //   - Any other layer: ONLY the keys that DO something on that layer light up,
 //     tinted with that layer's theme color (doubles as an on-board cheat-sheet).
 //     Keys that fall through (transparent) go dark.
-//   - Keypress: the key you hit flashes to full brightness, then fades back to
-//     its resting level over RGB_REACT_MS ("fade from dark").
+//   - Keypress: fires an expanding RIPPLE. A wavefront travels outward from the
+//     key you hit, lighting keys up to ~2 key-widths away, each flashing bright
+//     as the wave reaches it and then fading. The pressed key itself flashes
+//     first (the wave's origin), so it still reads as a direct hit.
 // It's all painted per-frame in rgb_matrix_indicators_advanced_user() below;
 // the underlying SOLID_COLOR mode is fully overwritten, so no rainbow leaks in.
+// The ripple uses each LED's physical position (g_led_config.point) and the
+// press location the hit-tracker records (g_last_hit_tracker.x/.y).
 
-#define RGB_IDLE_VAL  40    // resting brightness 0-255. Lower = darker/"more dark". 0 = keys only glow when pressed.
-#define RGB_REACT_MS  450   // how long a keypress flash takes to fade back to rest
+#define RGB_IDLE_VAL       40    // resting brightness 0-255. Lower = darker. 0 = keys glow only when hit.
+#define RGB_SPLASH_RADIUS  42    // how far the pulse reaches, in QMK point units (~2 key-widths)
+#define RGB_SPLASH_MS      150   // time for the wavefront to travel out to RGB_SPLASH_RADIUS
+#define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it, then fades
 
 // Per-layer "peak" color = the full-brightness color a key flashes to (and the
 // hue a layer's active keys rest at, just dimmed). Indexed by the layer enum.
@@ -162,16 +168,39 @@ static const uint8_t layer_theme[][3] = {
     [_MOUSE] = {255,  90,   0},  // orange
 };
 
-// How "hot" a given LED is right now (0 = at rest, 255 = just pressed), read
-// from the last-hit tracker. Returns 0 when keypress tracking is compiled out.
+// Cheap integer distance (octagonal approximation, ~max + 0.42*min). Good
+// enough for lighting and avoids pulling in floating-point sqrt.
+static uint16_t rgb_approx_dist(int16_t dx, int16_t dy) {
+    if (dx < 0) dx = -dx;
+    if (dy < 0) dy = -dy;
+    int16_t mn = dx < dy ? dx : dy;
+    int16_t mx = dx < dy ? dy : dx;
+    return (uint16_t)mx + (uint16_t)((mn * 27) >> 6);
+}
+
+// How "hot" a given LED is right now (0 = at rest, 255 = peak of the wave),
+// summed as the max over every recent hit's expanding ripple. Returns 0 when
+// keypress tracking is compiled out.
 static uint8_t rgb_hit_factor(uint8_t led_index) {
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
+    uint8_t lx = g_led_config.point[led_index].x;
+    uint8_t ly = g_led_config.point[led_index].y;
     uint8_t best = 0;
     for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
-        if (g_last_hit_tracker.index[i] != led_index) continue;
-        uint16_t tick = g_last_hit_tracker.tick[i];      // ms since the press
-        if (tick >= RGB_REACT_MS) continue;
-        uint8_t f = 255 - (uint8_t)((uint32_t)tick * 255 / RGB_REACT_MS);
+        int16_t  dx = (int16_t)lx - (int16_t)g_last_hit_tracker.x[i];
+        int16_t  dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
+        uint16_t d  = rgb_approx_dist(dx, dy);
+        if (d > RGB_SPLASH_RADIUS) continue;                     // outside the pulse
+
+        uint16_t tick   = g_last_hit_tracker.tick[i];           // ms since the press
+        uint16_t arrive = (uint16_t)((uint32_t)d * RGB_SPLASH_MS / RGB_SPLASH_RADIUS);
+        if (tick < arrive) continue;                            // wavefront not here yet
+        uint16_t age = tick - arrive;
+        if (age >= RGB_REACT_MS) continue;                      // already faded out
+
+        uint16_t tf = 255 - (uint16_t)((uint32_t)age * 255 / RGB_REACT_MS);   // time fade
+        uint16_t df = 255 - (uint16_t)((uint32_t)d * 150 / RGB_SPLASH_RADIUS); // far keys dimmer
+        uint8_t  f  = (uint8_t)(((uint32_t)tf * df) / 255);
         if (f > best) best = f;
     }
     return best;
