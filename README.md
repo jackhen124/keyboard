@@ -11,7 +11,7 @@ keyboard/
 ├── voyager/                     # active: ZSA Voyager (QMK)
 │   ├── flash/                   # the ONLY files compiled into firmware
 │   │   ├── keymap.c             # the keymap: 5 layers (Base, Sym, Num, Nav, Mouse)
-│   │   ├── lighting.c/.h        # RGB lighting module (modes, layer themes, ripple)
+│   │   ├── lighting.c/.h        # RGB lighting module (pattern + color, chosen independently)
 │   │   ├── config.h             # home-row-mod tuning (TAPPING_TERM, CHORDAL_HOLD, …)
 │   │   └── rules.mk             # QMK feature toggles (MOUSEKEY_ENABLE, SRC += lighting.c)
 │   ├── gen-keymap-images.py     # parses flash/keymap.c → images/*.svg (see below)

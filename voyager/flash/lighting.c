@@ -36,9 +36,10 @@
 #define RGB_SPLASH_MS      320   // time for the wavefront to travel one RGB_SPLASH_RADIUS
 #define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it
 
-// Cross pattern: a keypress instantly lights that key's whole row + column (the
-// full length of each axis, no travelling wavefront), which then fades out.
-#define RGB_CROSS_TOL      8     // max off-axis distance to count as "same row/column"
+// Cross pattern: a keypress instantly lights that key's whole matrix row +
+// column (the full length of each axis, no travelling wavefront), which then
+// fades out. Matched on the logical matrix grid, so column stagger can't smear
+// the row arm into a neighbouring physical row.
 #define RGB_CROSS_FADE_MS  260   // time for the lit cross to fade to black after a press
 
 #define RGB_MATRIX_MAX_X   224   // QMK scales key x-coords to 0..224 across the board
@@ -131,28 +132,45 @@ static uint8_t rgb_splash_factor(uint8_t led_index) {
 #endif
 }
 
+// Find the matrix (row, col) that drives a given LED. Returns false if none.
+static bool led_to_matrix(uint8_t led_index, uint8_t *out_row, uint8_t *out_col) {
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+            if (g_led_config.matrix_co[r][c] == led_index) {
+                *out_row = r;
+                *out_col = c;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // Cross (used by PAT_CROSS): a keypress instantly lights the pressed key's
 // entire row and column at once — no travelling wavefront, no distance falloff —
-// and the whole cross then fades out together over RGB_CROSS_FADE_MS. The row
-// arm is confined to the pressed key's own keyboard half, so a press never
-// throws a bar of light across onto the other hand. Returns the fade level
-// (0 = faded/at rest, 255 = just pressed) for this LED.
-static uint8_t rgb_cross_factor(uint8_t led_index) {
+// and the whole cross then fades out together over RGB_CROSS_FADE_MS.
+//
+// Matching is done on the MATRIX row/column of the pressed key, NOT on physical
+// x/y coordinates. The Voyager's columns are vertically staggered, so a physical
+// "same-y" test with any usable tolerance bleeds a press into the neighbouring
+// physical row (e.g. pressing O lit several top-row keys). Matrix row/col is the
+// logical grid and is stagger-proof. The same-half gate keeps a press from
+// throwing a bar of light across onto the other hand. (row, col) is the LED
+// currently being painted. Returns the fade level (0 = at rest, 255 = pressed).
+static uint8_t rgb_cross_factor(uint8_t led_index, uint8_t row, uint8_t col) {
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
     uint8_t lx  = g_led_config.point[led_index].x;
-    uint8_t ly  = g_led_config.point[led_index].y;
     uint8_t mid = RGB_MATRIX_MAX_X / 2;                          // split between the halves
     uint8_t best = 0;
     for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
-        uint8_t px = g_last_hit_tracker.x[i];
-        int16_t dx = (int16_t)lx - (int16_t)px;
-        int16_t dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
-        bool same_half = ((lx < mid) == (px < mid));
-        // On the press's column (same x) or row (same y)? Full axis, no reach cap.
-        // The row only extends within the pressed key's half; the column is
-        // same-x so it can't cross over anyway.
-        bool on_col = (dx <= RGB_CROSS_TOL && dx >= -RGB_CROSS_TOL);
-        bool on_row = (dy <= RGB_CROSS_TOL && dy >= -RGB_CROSS_TOL) && same_half;
+        uint8_t hidx = g_last_hit_tracker.index[i];
+        uint8_t hrow, hcol;
+        if (!led_to_matrix(hidx, &hrow, &hcol)) continue;
+
+        bool same_half = ((lx < mid) == (g_led_config.point[hidx].x < mid));
+        if (!same_half) continue;                               // never cross to the other hand
+        bool on_col = (col == hcol);                            // same matrix column
+        bool on_row = (row == hrow);                            // same matrix row
         if (!on_col && !on_row) continue;
 
         uint16_t tick = g_last_hit_tracker.tick[i];             // ms since the press
@@ -162,7 +180,7 @@ static uint8_t rgb_cross_factor(uint8_t led_index) {
     }
     return best;
 #else
-    (void)led_index;
+    (void)led_index; (void)row; (void)col;
     return 0;
 #endif
 }
@@ -227,7 +245,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                     if (is_col && (bkc - LM_COL_1) == g_color)   sel_v = RGB_IDLE_VAL;
 
                     if (g_pattern == PAT_CROSS) {
-                        uint8_t f = rgb_cross_factor(index);
+                        uint8_t f = rgb_cross_factor(index, row, col);
                         if (f > sel_v) {
                             uint8_t cr, cg, cb;
                             color_for(index, &cr, &cg, &cb);
@@ -255,7 +273,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             // … brightness from the pattern mode.
             uint16_t v;
             if (g_pattern == PAT_CROSS) {
-                v = rgb_cross_factor(index);                    // 0 idle (dark) .. 255 on press
+                v = rgb_cross_factor(index, row, col);          // 0 idle (dark) .. 255 on press
             } else if (g_pattern == PAT_REACTIVE) {
                 uint8_t f = rgb_splash_factor(index);
                 v = RGB_IDLE_VAL + ((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255;
