@@ -32,3 +32,14 @@
 // coming through as a base "k"). Safe globally because CHORDAL_HOLD still vetoes
 // same-hand rolls, so early holds only fire on opposite-hand or exempt thumbs.
 #define PERMISSIVE_HOLD
+
+// ── RGB Matrix: action-reactive lighting ────────────────────────────────────
+// RGB_MATRIX is already enabled by the Voyager's data-driven config; we only
+// need to opt into keypress tracking. RGB_MATRIX_KEYPRESSES turns on QMK's
+// "last hit tracker" (g_last_hit_tracker), which records which LEDs were pressed
+// and how long ago — that's what powers the keypress flash in keymap.c. The
+// default mode is left on a static SOLID_COLOR because the custom indicator
+// function repaints every LED each frame anyway (see rgb_matrix_indicators_
+// advanced_user in keymap.c), so no stock animation (the old "rainbow") shows.
+#define RGB_MATRIX_KEYPRESSES
+#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_SOLID_COLOR
