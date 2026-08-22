@@ -2,6 +2,14 @@
 
 #include QMK_KEYBOARD_H
 
+// PUBLIC interface of the lighting module — the only lighting header keymap.c
+// needs. The implementation is split across this folder by concern:
+//   lighting.c          state + init + selector-key routing (this file's owner)
+//   patterns.c          brightness: reactive ripple, cross, solid, off
+//   colors.c            hue: white, gradient
+//   render.c            the per-frame paint loop that combines the two
+//   lighting_internal.h the shared tunables / enums / decls those files pass around
+
 // Lighting selector keycodes. On the BASE layer these take over the WHOLE top
 // row, split into two INDEPENDENT selectors:
 //   - LEFT half  (LM_PAT_1..6): pick the lighting PATTERN (how keys animate).

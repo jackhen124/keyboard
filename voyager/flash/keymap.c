@@ -14,7 +14,7 @@
 //   row3 L(6) row3 R(6) | thumbs: L-outer L-inner R-inner R-outer
 
 #include QMK_KEYBOARD_H
-#include "lighting.h"   // RGB lighting + the LM_PAT_*/LM_COL_* top-row selector keys
+#include "lighting/lighting.h"   // RGB lighting + the LM_PAT_*/LM_COL_* top-row selector keys
 
 enum layers {
     _BASE = 0,
