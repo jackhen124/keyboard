@@ -24,6 +24,16 @@ void lighting_color_for(uint8_t led_index, uint8_t *r, uint8_t *g, uint8_t *b) {
         }
         return;
     }
+    if (lighting_get_color() == COLOR_SUNSET) {
+        // Yellow -> orange -> red across x. Red stays pinned; green fades out from
+        // 255 (yellow) through mid (orange) to 0 (red). Blue is always off.
+        uint8_t x = g_led_config.point[led_index].x;            // 0..RGB_MATRIX_MAX_X
+        uint8_t t = (uint8_t)((uint16_t)x * 255 / RGB_MATRIX_MAX_X); // 0..255
+        *r = 255;
+        *g = 255 - t;
+        *b = 0;
+        return;
+    }
     // COLOR_WHITE (default)
     *r = 255;
     *g = 255;

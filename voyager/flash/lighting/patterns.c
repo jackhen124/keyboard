@@ -105,16 +105,38 @@ static uint8_t cross_factor(uint8_t led_index, uint8_t row, uint8_t col) {
 #endif
 }
 
+// ── PAT_FADE: single-key slow fade ────────────────────────────────────────────
+// Everything is dark at rest. A keypress lights ONLY that key (matched on its own
+// LED index — no row/column, no ripple to neighbours), which then eases back down
+// to black over the long RGB_FADE_MS. Returns the fade level (0 = at rest,
+// 255 = just pressed).
+static uint8_t fade_factor(uint8_t led_index) {
+#ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
+    uint8_t best = 0;
+    for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
+        if (g_last_hit_tracker.index[i] != led_index) continue;  // only the pressed key
+        uint16_t tick = g_last_hit_tracker.tick[i];              // ms since the press
+        if (tick >= RGB_FADE_MS) continue;                       // fully faded
+        uint8_t f = 255 - (uint8_t)((uint32_t)tick * 255 / RGB_FADE_MS);
+        if (f > best) best = f;
+    }
+    return best;
+#else
+    (void)led_index;
+    return 0;
+#endif
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 uint8_t lighting_pattern_brightness(uint8_t pattern, uint8_t led_index,
                                     uint8_t row, uint8_t col) {
     switch (pattern) {
         case PAT_CROSS:
             return cross_factor(led_index, row, col);
-        case PAT_REACTIVE: {
-            uint8_t f = splash_factor(led_index);               // 0 idle .. 255 peak
-            return RGB_IDLE_VAL + (uint8_t)(((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255);
-        }
+        case PAT_REACTIVE:
+            return splash_factor(led_index);                    // dark idle .. 255 peak
+        case PAT_FADE:
+            return fade_factor(led_index);                      // dark idle .. 255 just pressed
         case PAT_SOLID:
             return RGB_IDLE_VAL;
         case PAT_OFF:
