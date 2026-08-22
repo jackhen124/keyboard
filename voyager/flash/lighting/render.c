@@ -51,7 +51,7 @@ static bool draw_selector(uint8_t layer, uint8_t index, uint8_t row, uint8_t col
     if (is_col && (bkc - LM_COL_1) == lighting_get_color())   sel_v = RGB_IDLE_VAL;
 
     if (lighting_get_pattern() == PAT_CROSS) {
-        uint8_t f = lighting_pattern_brightness(PAT_CROSS, index, row, col);
+        uint8_t f = lighting_pattern_brightness(PAT_CROSS, index);
         if (f > sel_v) {
             paint(index, f);        // the cross sweep, in the active color
             return true;
@@ -72,13 +72,16 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
             if (draw_selector(layer, index, row, col)) continue;
 
-            if (pattern == PAT_OFF || !key_active(layer, row, col)) {
+            // PAT_AREA deliberately ignores a key's function: its neighbourhood
+            // glow lights unmapped keys too, so it skips the cheat-sheet gating.
+            bool gated = pattern != PAT_AREA && !key_active(layer, row, col);
+            if (pattern == PAT_OFF || gated) {
                 rgb_matrix_set_color(index, 0, 0, 0);
                 continue;
             }
 
             // Brightness from the pattern, hue from the color — combined in paint().
-            paint(index, lighting_pattern_brightness(pattern, index, row, col));
+            paint(index, lighting_pattern_brightness(pattern, index));
         }
     }
     return false;

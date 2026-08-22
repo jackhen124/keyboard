@@ -18,18 +18,22 @@ static uint16_t approx_dist(int16_t dx, int16_t dy) {
     return (uint16_t)mx + (uint16_t)((mn * 27) >> 6);
 }
 
-// Find the matrix (row, col) that drives a given LED. Returns false if none.
-static bool led_to_matrix(uint8_t led_index, uint8_t *out_row, uint8_t *out_col) {
-    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
-        for (uint8_t c = 0; c < MATRIX_COLS; c++) {
-            if (g_led_config.matrix_co[r][c] == led_index) {
-                *out_row = r;
-                *out_col = c;
-                return true;
-            }
-        }
-    }
-    return false;
+// Logical grid position from an LED's PHYSICAL point, not its matrix wiring.
+// The Voyager's matrix is not a clean grid — the bottom row's inner key sits on
+// its own matrix row and the thumbs share matrix columns with the alpha keys — so
+// matching on matrix (row, col) lights the wrong keys. The RGB point coordinates
+// (0..224) are a true physical grid instead: within a row keys curve up by only
+// ~5 units, but rows sit ~11 apart and columns ~17 apart, so integer-bucketing the
+// raw coordinate drops every key into exactly one row/col with no stagger bleed.
+// Rows 0..3 are the alpha rows; anything at row >= 4 (y >= ~53) is a thumb.
+static inline uint8_t point_row(uint8_t led_index) {
+    return (uint8_t)(g_led_config.point[led_index].y / 11);
+}
+static inline uint8_t point_col(uint8_t led_index) {
+    return (uint8_t)(((uint16_t)g_led_config.point[led_index].x + 8) / 17);
+}
+static inline bool is_thumb(uint8_t led_index) {
+    return point_row(led_index) >= 4;
 }
 
 // ── PAT_REACTIVE: round keypress ripple ───────────────────────────────────────
@@ -70,28 +74,29 @@ static uint8_t splash_factor(uint8_t led_index) {
 // no travelling wavefront, no distance falloff — and the whole cross then fades
 // out together over RGB_CROSS_FADE_MS.
 //
-// Matching is done on the MATRIX row/column of the pressed key, NOT on physical
-// x/y coordinates. The Voyager's columns are vertically staggered, so a physical
-// "same-y" test with any usable tolerance bleeds a press into the neighbouring
-// physical row (e.g. pressing O lit several top-row keys). Matrix row/col is the
-// logical grid and is stagger-proof. The same-half gate keeps a press from
-// throwing a bar of light across onto the other hand. (row, col) is the LED
-// currently being painted. Returns the fade level (0 = at rest, 255 = pressed).
-static uint8_t cross_factor(uint8_t led_index, uint8_t row, uint8_t col) {
+// Matching is done on the physical-coordinate grid (point_row / point_col), NOT on
+// the raw matrix wiring: the Voyager's matrix scatters the bottom row and thumbs
+// across rows/columns that don't line up visually, so a matrix match lit the wrong
+// keys (missed the inner bottom key, lit a thumb on the same matrix column). The
+// same-half gate keeps a press from throwing a bar of light onto the other hand.
+// Thumbs are excluded entirely (a thumb neither casts a cross nor catches one), so
+// an alpha press can never bleed onto a thumb. `led_index` is the LED being
+// painted. Returns the fade level (0 = at rest, 255 = just pressed).
+static uint8_t cross_factor(uint8_t led_index) {
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
-    uint8_t lx  = g_led_config.point[led_index].x;
-    uint8_t mid = RGB_MATRIX_MAX_X / 2;                          // split between the halves
+    if (is_thumb(led_index)) return 0;                          // thumbs sit out the cross
+    uint8_t lx   = g_led_config.point[led_index].x;
+    uint8_t mid  = RGB_MATRIX_MAX_X / 2;                        // split between the halves
+    uint8_t lrow = point_row(led_index);
+    uint8_t lcol = point_col(led_index);
     uint8_t best = 0;
     for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
         uint8_t hidx = g_last_hit_tracker.index[i];
-        uint8_t hrow, hcol;
-        if (!led_to_matrix(hidx, &hrow, &hcol)) continue;
+        if (is_thumb(hidx)) continue;                           // a thumb press casts no cross
 
         bool same_half = ((lx < mid) == (g_led_config.point[hidx].x < mid));
         if (!same_half) continue;                               // never cross to the other hand
-        bool on_col = (col == hcol);                            // same matrix column
-        bool on_row = (row == hrow);                            // same matrix row
-        if (!on_col && !on_row) continue;
+        if (lrow != point_row(hidx) && lcol != point_col(hidx)) continue;
 
         uint16_t tick = g_last_hit_tracker.tick[i];             // ms since the press
         if (tick >= RGB_CROSS_FADE_MS) continue;                // fully faded
@@ -100,7 +105,7 @@ static uint8_t cross_factor(uint8_t led_index, uint8_t row, uint8_t col) {
     }
     return best;
 #else
-    (void)led_index; (void)row; (void)col;
+    (void)led_index;
     return 0;
 #endif
 }
@@ -127,14 +132,61 @@ static uint8_t fade_factor(uint8_t led_index) {
 #endif
 }
 
+// ── PAT_AREA: area fade around the press ──────────────────────────────────────
+// A slow fade like PAT_FADE, but a single press lights a whole neighbourhood: the
+// pressed key at full opacity and every key up to RGB_AREA_RADIUS grid steps away
+// at progressively lower opacity, all easing to black together over RGB_AREA_MS.
+//
+// Reach is measured in KEYS, not raw point units — Chebyshev distance on the
+// physical-coordinate grid (point_row / point_col), so "3 keys away" means the same
+// in every direction despite columns sitting wider apart than rows. The same-half
+// gate keeps the glow on the hand that pressed. Unlike the other reactive patterns
+// this one deliberately makes no distinction about a key's function — render.c does
+// not gate unmapped keys dark for it — so the neighbourhood lights up whole.
+// Returns the combined spatial+time fade level (0 = at rest, 255 = just pressed).
+static uint8_t area_factor(uint8_t led_index) {
+#ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
+    uint8_t lx   = g_led_config.point[led_index].x;
+    uint8_t mid  = RGB_MATRIX_MAX_X / 2;                        // split between the halves
+    int16_t lrow = point_row(led_index);
+    int16_t lcol = point_col(led_index);
+    uint8_t best = 0;
+    for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
+        uint8_t hidx = g_last_hit_tracker.index[i];
+
+        bool same_half = ((lx < mid) == (g_led_config.point[hidx].x < mid));
+        if (!same_half) continue;                               // stay on the pressing hand
+
+        int16_t drow = lrow - (int16_t)point_row(hidx);
+        int16_t dcol = lcol - (int16_t)point_col(hidx);
+        if (drow < 0) drow = -drow;
+        if (dcol < 0) dcol = -dcol;
+        uint16_t dist = drow > dcol ? (uint16_t)drow : (uint16_t)dcol;   // Chebyshev, in keys
+        if (dist > RGB_AREA_RADIUS) continue;                   // outside the neighbourhood
+
+        uint16_t tick = g_last_hit_tracker.tick[i];             // ms since the press
+        if (tick >= RGB_AREA_MS) continue;                      // fully faded
+        uint16_t tf = 255 - (uint16_t)((uint32_t)tick * 255 / RGB_AREA_MS);     // linear time fade
+        uint16_t sf = 255 - dist * (255 / (RGB_AREA_RADIUS + 1));               // opacity by distance
+        uint8_t  f  = (uint8_t)(((uint32_t)tf * sf) / 255);
+        if (f > best) best = f;
+    }
+    return best;
+#else
+    (void)led_index;
+    return 0;
+#endif
+}
+
 // ── Dispatch ──────────────────────────────────────────────────────────────────
-uint8_t lighting_pattern_brightness(uint8_t pattern, uint8_t led_index,
-                                    uint8_t row, uint8_t col) {
+uint8_t lighting_pattern_brightness(uint8_t pattern, uint8_t led_index) {
     switch (pattern) {
         case PAT_CROSS:
-            return cross_factor(led_index, row, col);
+            return cross_factor(led_index);
         case PAT_REACTIVE:
             return splash_factor(led_index);                    // dark idle .. 255 peak
+        case PAT_AREA:
+            return area_factor(led_index);                      // dark idle .. 255 just pressed
         case PAT_FADE:
             return fade_factor(led_index);                      // dark idle .. 255 just pressed
         case PAT_SOLID:
