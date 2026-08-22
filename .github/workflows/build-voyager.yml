@@ -27,7 +27,8 @@ jobs:
         run: |
           KMDIR=/qmk_firmware/keyboards/zsa/voyager/keymaps/jack
           mkdir -p "$KMDIR"
-          cp repo/voyager/flash/keymap.c repo/voyager/flash/config.h repo/voyager/flash/rules.mk "$KMDIR/"
+          # Copy every source in flash/ (keymap.c, config.h, rules.mk, lighting.*)
+          cp -r repo/voyager/flash/. "$KMDIR/"
 
       - name: Compile
         run: |
