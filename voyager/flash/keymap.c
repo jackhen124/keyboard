@@ -60,11 +60,13 @@ enum custom_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
-    // Top row: the number keys are now LIGHTING-MODE selectors (LM_MODE_1..10,
-    // "1".."0"), not digits — type numbers from the _NUM layer. LM_MODE_1 is the
-    // active/current lighting mode. See lighting.c.
+    // Top row: the ENTIRE row is now LIGHTING-MODE selectors (LM_MODE_1..12),
+    // not keys — type numbers from the _NUM layer; "=" lives on _SYM/_NUM and
+    // Backspace on the left thumb (TH_NAV). Left-to-right: LM_MODE_1 (top-left,
+    // was "=") is the cross-ripple mode; then reactive/solid/off, rest reserved.
+    // See lighting.c.
     [_BASE] = LAYOUT_voyager(
-        KC_EQL, LM_MODE_1, LM_MODE_2, LM_MODE_3, LM_MODE_4, LM_MODE_5,  LM_MODE_6, LM_MODE_7, LM_MODE_8, LM_MODE_9, LM_MODE_10, KC_BSPC,
+        LM_MODE_1, LM_MODE_2, LM_MODE_3, LM_MODE_4, LM_MODE_5, LM_MODE_6,  LM_MODE_7, LM_MODE_8, LM_MODE_9, LM_MODE_10, LM_MODE_11, LM_MODE_12,
         _______,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
         KC_ESC,   HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
         KC_LSFT,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,

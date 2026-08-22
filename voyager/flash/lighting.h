@@ -2,11 +2,12 @@
 
 #include QMK_KEYBOARD_H
 
-// Lighting-mode selector keycodes. On the BASE layer these replace the number
-// row: tapping one switches the active lighting mode (see lighting.c). LM_MODE_1
-// is the physical "1" key, LM_MODE_10 the "0" key. They live in QMK's dedicated
-// QK_USER range so they can never collide with the keymap's own custom keycodes
-// (e.g. TRIPLE_GRV, which sits at SAFE_RANGE in keymap.c).
+// Lighting-mode selector keycodes. On the BASE layer these take over the WHOLE
+// top row: tapping one switches the active lighting mode (see lighting.c).
+// Left-to-right, LM_MODE_1 is the top-left key (where "=" used to be) and
+// LM_MODE_12 the top-right (where Backspace used to be). They live in QMK's
+// dedicated QK_USER range so they can never collide with the keymap's own custom
+// keycodes (e.g. TRIPLE_GRV, which sits at SAFE_RANGE in keymap.c).
 enum lighting_keycodes {
     LM_MODE_1 = QK_USER_0,
     LM_MODE_2,
@@ -18,6 +19,8 @@ enum lighting_keycodes {
     LM_MODE_8,
     LM_MODE_9,
     LM_MODE_10,
+    LM_MODE_11,
+    LM_MODE_12,
 };
 
 // Set the initial RGB state. Call once from keyboard_post_init_user().

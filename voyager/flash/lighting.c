@@ -4,11 +4,13 @@
 // lighting.h): the active mode's key rests dim white, every other selector key
 // is dark, so the top row always shows — and lets you switch — the mode.
 //
-// Modes, mapped in order to the "1".."0" keys:
-//   1  MODE_REACTIVE  dim-white idle + per-layer theme colors + keypress ripple
-//   2  MODE_SOLID     the same idle/theme colors, held steady (no keypress FX)
-//   3  MODE_OFF       all keys dark (the selector row still shows the indicator)
-//   4..10             unused for now — selecting them is ignored, keys stay dark
+// Modes, mapped in order to the top-row keys (LM_MODE_1 = top-left "=" key):
+//   1  MODE_CROSS     dark idle; a keypress sends white ripples out along that
+//                     key's row + column only (a cross/plus shape)
+//   2  MODE_REACTIVE  dim-white idle + per-layer theme colors + keypress ripple
+//   3  MODE_SOLID     the same idle/theme colors, held steady (no keypress FX)
+//   4  MODE_OFF       all keys dark (the selector row still shows the indicator)
+//   5..12             unused for now — selecting them is ignored, keys stay dark
 //
 // Everything is painted per frame in rgb_matrix_indicators_advanced_user(),
 // which fully overwrites the underlying SOLID_COLOR mode, so no stock animation
@@ -19,8 +21,13 @@
 // ── Tunables ────────────────────────────────────────────────────────────────
 #define RGB_IDLE_VAL       40    // resting brightness 0-255. Lower = darker.
 #define RGB_SPLASH_RADIUS  42    // ripple reach in QMK point units (~2 key-widths)
-#define RGB_SPLASH_MS      320   // time for the wavefront to travel out to the radius
+#define RGB_SPLASH_MS      320   // time for the wavefront to travel one RGB_SPLASH_RADIUS
 #define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it
+
+// Cross mode: the ripple is confined to the pressed key's row + column and runs
+// further than the round splash so the arms clearly reach across the board.
+#define RGB_CROSS_RADIUS   120   // how far each arm of the cross reaches (point units)
+#define RGB_CROSS_TOL      8     // max off-axis distance to count as "same row/column"
 
 #define LIGHTING_BASE_LAYER 0    // layer index whose number row hosts the selectors
 
@@ -37,9 +44,10 @@ static const uint8_t layer_theme[][3] = {
 
 // ── Modes ────────────────────────────────────────────────────────────────────
 enum lighting_mode {
-    MODE_REACTIVE = 0,
-    MODE_SOLID,
-    MODE_OFF,
+    MODE_CROSS = 0,    // top-left "=" key: dark idle, white cross-shaped ripple
+    MODE_REACTIVE,     // dim-white idle + layer themes + round keypress ripple
+    MODE_SOLID,        // steady idle/theme colors, no keypress reaction
+    MODE_OFF,          // everything dark
     MODE_COUNT,
 };
 
@@ -53,7 +61,7 @@ void lighting_init(void) {
 }
 
 bool lighting_process_record(uint16_t keycode, keyrecord_t *record) {
-    if (keycode < LM_MODE_1 || keycode > LM_MODE_10) return true;  // not a lighting key
+    if (keycode < LM_MODE_1 || keycode > LM_MODE_12) return true;  // not a lighting key
     if (record->event.pressed) {
         uint8_t sel = keycode - LM_MODE_1;         // 0-based mode index
         if (sel < MODE_COUNT) g_lighting_mode = sel;
@@ -74,18 +82,33 @@ static uint16_t rgb_approx_dist(int16_t dx, int16_t dy) {
 }
 
 // How "hot" a given LED is right now (0 = at rest, 255 = peak of the wave),
-// taken as the max over every recent hit's expanding ripple. Returns 0 when
-// keypress tracking is compiled out.
-static uint8_t rgb_hit_factor(uint8_t led_index) {
+// taken as the max over every recent hit's expanding ripple. `cross` confines
+// the ripple to the pressed key's row/column axes (a cross); otherwise it's a
+// round splash. `radius` is the reach; the wave travels at a fixed speed
+// (RGB_SPLASH_MS per RGB_SPLASH_RADIUS units) regardless of reach. Returns 0
+// when keypress tracking is compiled out.
+static uint8_t rgb_ripple_factor(uint8_t led_index, bool cross, uint16_t radius) {
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
     uint8_t lx = g_led_config.point[led_index].x;
     uint8_t ly = g_led_config.point[led_index].y;
     uint8_t best = 0;
     for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
-        int16_t  dx = (int16_t)lx - (int16_t)g_last_hit_tracker.x[i];
-        int16_t  dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
-        uint16_t d  = rgb_approx_dist(dx, dy);
-        if (d > RGB_SPLASH_RADIUS) continue;                     // outside the pulse
+        int16_t dx = (int16_t)lx - (int16_t)g_last_hit_tracker.x[i];
+        int16_t dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
+
+        uint16_t d;
+        if (cross) {
+            // Keep only keys sharing the press's column (same x) or row (same y);
+            // distance is then measured along that arm.
+            bool on_col = (dx <= RGB_CROSS_TOL && dx >= -RGB_CROSS_TOL);
+            bool on_row = (dy <= RGB_CROSS_TOL && dy >= -RGB_CROSS_TOL);
+            if (!on_col && !on_row) continue;
+            int16_t along = on_col ? dy : dx;   // the on-axis component
+            d = (uint16_t)(along < 0 ? -along : along);
+        } else {
+            d = rgb_approx_dist(dx, dy);
+        }
+        if (d > radius) continue;                               // outside the reach
 
         uint16_t tick   = g_last_hit_tracker.tick[i];           // ms since the press
         uint16_t arrive = (uint16_t)((uint32_t)d * RGB_SPLASH_MS / RGB_SPLASH_RADIUS);
@@ -94,13 +117,13 @@ static uint8_t rgb_hit_factor(uint8_t led_index) {
         if (age >= RGB_REACT_MS) continue;                      // already faded out
 
         uint16_t tf = 255 - (uint16_t)((uint32_t)age * 255 / RGB_REACT_MS);   // time fade
-        uint16_t df = 255 - (uint16_t)((uint32_t)d * 150 / RGB_SPLASH_RADIUS); // far keys dimmer
+        uint16_t df = 255 - (uint16_t)((uint32_t)d * 150 / radius);           // far keys dimmer
         uint8_t  f  = (uint8_t)(((uint32_t)tf * df) / 255);
         if (f > best) best = f;
     }
     return best;
 #else
-    (void)led_index;
+    (void)led_index; (void)cross; (void)radius;
     return 0;
 #endif
 }
@@ -134,11 +157,18 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             if (layer == LIGHTING_BASE_LAYER) {
                 uint16_t bkc = keymap_key_to_keycode(LIGHTING_BASE_LAYER,
                                                      (keypos_t){.row = row, .col = col});
-                if (bkc >= LM_MODE_1 && bkc <= LM_MODE_10) {
+                if (bkc >= LM_MODE_1 && bkc <= LM_MODE_12) {
                     uint8_t v = ((bkc - LM_MODE_1) == g_lighting_mode) ? RGB_IDLE_VAL : 0;
                     rgb_matrix_set_color(index, v, v, v);
                     continue;
                 }
+            }
+
+            // CROSS: dark board, white cross-shaped ripple from each keypress.
+            if (g_lighting_mode == MODE_CROSS) {
+                uint8_t f = rgb_ripple_factor(index, true, RGB_CROSS_RADIUS);
+                rgb_matrix_set_color(index, f, f, f);
+                continue;
             }
 
             if (g_lighting_mode == MODE_OFF) {
@@ -153,7 +183,7 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             }
 
             // REACTIVE ramps brightness up on a keypress; SOLID stays at rest.
-            uint8_t  f = (g_lighting_mode == MODE_REACTIVE) ? rgb_hit_factor(index) : 0;
+            uint8_t  f = (g_lighting_mode == MODE_REACTIVE) ? rgb_ripple_factor(index, false, RGB_SPLASH_RADIUS) : 0;
             uint16_t v = RGB_IDLE_VAL + ((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255;
             rgb_matrix_set_color(index,
                 (uint8_t)((uint16_t)pr * v / 255),
