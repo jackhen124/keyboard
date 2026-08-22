@@ -40,6 +40,9 @@ ALIASES = {
     "_______": "KC_TRNS",
     "XXXXXXX": "KC_NO",
     "_____": "KC_TRNS",
+    # Lighting-mode selectors (defined in lighting.h, not keymap.c). Give them
+    # short labels so the number row renders cleanly instead of "LM_MODE_n".
+    **{f"LM_MODE_{n}": f"LM{n}" for n in range(1, 11)},
 }
 
 

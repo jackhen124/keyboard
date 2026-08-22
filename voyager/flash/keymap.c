@@ -14,6 +14,7 @@
 //   row3 L(6) row3 R(6) | thumbs: L-outer L-inner R-inner R-outer
 
 #include QMK_KEYBOARD_H
+#include "lighting.h"   // RGB lighting + the LM_MODE_* number-row selector keys
 
 enum layers {
     _BASE = 0,
@@ -59,8 +60,11 @@ enum custom_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
+    // Top row: the number keys are now LIGHTING-MODE selectors (LM_MODE_1..10,
+    // "1".."0"), not digits — type numbers from the _NUM layer. LM_MODE_1 is the
+    // active/current lighting mode. See lighting.c.
     [_BASE] = LAYOUT_voyager(
-        KC_EQL,   KC_1,    KC_2,    KC_3,    KC_4,    KC_5,        KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC,
+        KC_EQL, LM_MODE_1, LM_MODE_2, LM_MODE_3, LM_MODE_4, LM_MODE_5,  LM_MODE_6, LM_MODE_7, LM_MODE_8, LM_MODE_9, LM_MODE_10, KC_BSPC,
         _______,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
         KC_ESC,   HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
         KC_LSFT,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
@@ -115,11 +119,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 // ── Custom keycode handling ─────────────────────────────────────────────────
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (!lighting_process_record(keycode, record)) return false;
     if (keycode == TRIPLE_GRV && record->event.pressed) {
         SEND_STRING("```");
         return false;
     }
     return true;
+}
+
+// RGB lighting lives in lighting.c; just hand it the init hook.
+void keyboard_post_init_user(void) {
+    lighting_init();
 }
 
 // ── Bilateral hold handedness (CHORDAL_HOLD) ────────────────────────────────
@@ -137,114 +147,3 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
 // Tapping term is a single global value (see TAPPING_TERM in config.h); there is
 // no per-finger override. PERMISSIVE_HOLD + CHORDAL_HOLD, not a longer term, are
 // what keep slow-finger holds reliable.
-
-// ── RGB: action-reactive lighting ───────────────────────────────────────────
-// Replaces QMK's stock rainbow with lighting that responds to what you do:
-//   - BASE layer: every key rests at a calm, dim white.
-//   - Any other layer: ONLY the keys that DO something on that layer light up,
-//     tinted with that layer's theme color (doubles as an on-board cheat-sheet).
-//     Keys that fall through (transparent) go dark.
-//   - Keypress: fires an expanding RIPPLE. A wavefront travels outward from the
-//     key you hit, lighting keys up to ~2 key-widths away, each flashing bright
-//     as the wave reaches it and then fading. The pressed key itself flashes
-//     first (the wave's origin), so it still reads as a direct hit.
-// It's all painted per-frame in rgb_matrix_indicators_advanced_user() below;
-// the underlying SOLID_COLOR mode is fully overwritten, so no rainbow leaks in.
-// The ripple uses each LED's physical position (g_led_config.point) and the
-// press location the hit-tracker records (g_last_hit_tracker.x/.y).
-
-#define RGB_IDLE_VAL       40    // resting brightness 0-255. Lower = darker. 0 = keys glow only when hit.
-#define RGB_SPLASH_RADIUS  42    // how far the pulse reaches, in QMK point units (~2 key-widths)
-#define RGB_SPLASH_MS      320   // time for the wavefront to travel out to RGB_SPLASH_RADIUS
-#define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it, then fades
-
-// Per-layer "peak" color = the full-brightness color a key flashes to (and the
-// hue a layer's active keys rest at, just dimmed). Indexed by the layer enum.
-static const uint8_t layer_theme[][3] = {
-    [_BASE]  = {255, 255, 255},  // white
-    [_SYM]   = {  0, 255, 255},  // cyan
-    [_NUM]   = {  0, 255,   0},  // green
-    [_NAV]   = {160,   0, 255},  // purple
-    [_MOUSE] = {255,  90,   0},  // orange
-};
-
-// Cheap integer distance (octagonal approximation, ~max + 0.42*min). Good
-// enough for lighting and avoids pulling in floating-point sqrt.
-static uint16_t rgb_approx_dist(int16_t dx, int16_t dy) {
-    if (dx < 0) dx = -dx;
-    if (dy < 0) dy = -dy;
-    int16_t mn = dx < dy ? dx : dy;
-    int16_t mx = dx < dy ? dy : dx;
-    return (uint16_t)mx + (uint16_t)((mn * 27) >> 6);
-}
-
-// How "hot" a given LED is right now (0 = at rest, 255 = peak of the wave),
-// summed as the max over every recent hit's expanding ripple. Returns 0 when
-// keypress tracking is compiled out.
-static uint8_t rgb_hit_factor(uint8_t led_index) {
-#ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
-    uint8_t lx = g_led_config.point[led_index].x;
-    uint8_t ly = g_led_config.point[led_index].y;
-    uint8_t best = 0;
-    for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
-        int16_t  dx = (int16_t)lx - (int16_t)g_last_hit_tracker.x[i];
-        int16_t  dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
-        uint16_t d  = rgb_approx_dist(dx, dy);
-        if (d > RGB_SPLASH_RADIUS) continue;                     // outside the pulse
-
-        uint16_t tick   = g_last_hit_tracker.tick[i];           // ms since the press
-        uint16_t arrive = (uint16_t)((uint32_t)d * RGB_SPLASH_MS / RGB_SPLASH_RADIUS);
-        if (tick < arrive) continue;                            // wavefront not here yet
-        uint16_t age = tick - arrive;
-        if (age >= RGB_REACT_MS) continue;                      // already faded out
-
-        uint16_t tf = 255 - (uint16_t)((uint32_t)age * 255 / RGB_REACT_MS);   // time fade
-        uint16_t df = 255 - (uint16_t)((uint32_t)d * 150 / RGB_SPLASH_RADIUS); // far keys dimmer
-        uint8_t  f  = (uint8_t)(((uint32_t)tf * df) / 255);
-        if (f > best) best = f;
-    }
-    return best;
-#else
-    (void)led_index;
-    return 0;
-#endif
-}
-
-bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    uint8_t layer = get_highest_layer(layer_state);
-    uint8_t pr = layer_theme[layer][0];
-    uint8_t pg = layer_theme[layer][1];
-    uint8_t pb = layer_theme[layer][2];
-
-    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
-            uint8_t index = g_led_config.matrix_co[row][col];
-            if (index == NO_LED || index < led_min || index >= led_max) continue;
-
-            // Above base, only keys that do something on this layer light up.
-            if (layer != _BASE) {
-                uint16_t kc = keymap_key_to_keycode(layer, (keypos_t){.row = row, .col = col});
-                if (kc == KC_TRANSPARENT || kc == KC_NO) {
-                    rgb_matrix_set_color(index, 0, 0, 0);
-                    continue;
-                }
-            }
-
-            // Brightness ramps from RGB_IDLE_VAL (rest) up to 255 (just pressed).
-            uint8_t  f = rgb_hit_factor(index);
-            uint16_t v = RGB_IDLE_VAL + ((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255;
-            rgb_matrix_set_color(index,
-                (uint8_t)((uint16_t)pr * v / 255),
-                (uint8_t)((uint16_t)pg * v / 255),
-                (uint8_t)((uint16_t)pb * v / 255));
-        }
-    }
-    return false;
-}
-
-// Start from a clean, static base so no saved rainbow animation shows through
-// the custom indicator painting above. noeeprom = doesn't overwrite saved prefs.
-void keyboard_post_init_user(void) {
-    rgb_matrix_enable_noeeprom();
-    rgb_matrix_mode_noeeprom(RGB_MATRIX_SOLID_COLOR);
-}
