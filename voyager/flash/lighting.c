@@ -1,16 +1,28 @@
 // ── Voyager lighting ─────────────────────────────────────────────────────────
-// Action-reactive RGB, kept separate from the keymap/keybinds (keymap.c). The
-// base-layer number row acts as a lighting-mode selector (LM_MODE_* in
-// lighting.h): the active mode's key rests dim white, every other selector key
-// is dark, so the top row always shows — and lets you switch — the mode.
+// Action-reactive RGB, kept separate from the keymap/keybinds (keymap.c).
 //
-// Modes, mapped in order to the top-row keys (LM_MODE_1 = top-left "=" key):
-//   1  MODE_CROSS     dark idle; a keypress instantly lights that key's whole
-//                     row + column (a cross/plus shape), which then fades out
-//   2  MODE_REACTIVE  dim-white idle + per-layer theme colors + keypress ripple
-//   3  MODE_SOLID     the same idle/theme colors, held steady (no keypress FX)
-//   4  MODE_OFF       all keys dark (the selector row still shows the indicator)
-//   5..12             unused for now — selecting them is ignored, keys stay dark
+// Two INDEPENDENT axes, both chosen from the base-layer top row:
+//   - PATTERN (left 6 keys, LM_PAT_*): how the board animates / reacts.
+//   - COLOR   (right 6 keys, LM_COL_*): the palette that pattern is drawn in.
+// They combine: the pattern decides each key's BRIGHTNESS (idle glow, ripple,
+// cross flash, …) and the color decides each key's HUE. So any pattern can run
+// in any color. The active pattern key and active color key rest dim white on
+// the top row; the others are dark, so the row always shows — and switches —
+// the current selection.
+//
+// Patterns, mapped in order to the LEFT top-row keys (LM_PAT_1 = top-left):
+//   1  PAT_REACTIVE  dim idle glow + a round ripple that blooms on each keypress
+//   2  PAT_CROSS     dark idle; a keypress instantly lights that key's whole
+//                    row + column (a cross/plus shape), which then fades out
+//   3  PAT_SOLID     steady idle glow, no keypress reaction
+//   4  PAT_OFF       all keys dark
+//   5..6             unused for now — selecting them is ignored, keys stay dark
+//
+// Colors, mapped in order to the RIGHT top-row keys (LM_COL_1 = leftmost of the
+// right half):
+//   1  COLOR_WHITE     plain white
+//   2  COLOR_GRADIENT  a blue→green→yellow gradient across the board (by x)
+//   3..6               unused for now — selecting them is ignored
 //
 // Everything is painted per frame in rgb_matrix_indicators_advanced_user(),
 // which fully overwrites the underlying SOLID_COLOR mode, so no stock animation
@@ -24,34 +36,32 @@
 #define RGB_SPLASH_MS      320   // time for the wavefront to travel one RGB_SPLASH_RADIUS
 #define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it
 
-// Cross mode: a keypress instantly lights that key's whole row + column (the
+// Cross pattern: a keypress instantly lights that key's whole row + column (the
 // full length of each axis, no travelling wavefront), which then fades out.
 #define RGB_CROSS_TOL      8     // max off-axis distance to count as "same row/column"
-#define RGB_CROSS_FADE_MS  500   // time for the lit cross to fade to black after a press
+#define RGB_CROSS_FADE_MS  260   // time for the lit cross to fade to black after a press
 
-#define LIGHTING_BASE_LAYER 0    // layer index whose number row hosts the selectors
+#define RGB_MATRIX_MAX_X   224   // QMK scales key x-coords to 0..224 across the board
 
-// Per-layer "peak" (full-brightness) color: a layer's active keys rest at this
-// hue, just dimmed, and flash to it on a keypress. Indexed by layer number.
-static const uint8_t layer_theme[][3] = {
-    {255, 255, 255},  // 0 _BASE   white
-    {  0, 255, 255},  // 1 _SYM    cyan
-    {  0, 255,   0},  // 2 _NUM    green
-    {160,   0, 255},  // 3 _NAV    purple
-    {255,  90,   0},  // 4 _MOUSE  orange
-};
-#define LAYER_THEME_COUNT (sizeof(layer_theme) / sizeof(layer_theme[0]))
+#define LIGHTING_BASE_LAYER 0    // layer index whose top row hosts the selectors
 
-// ── Modes ────────────────────────────────────────────────────────────────────
-enum lighting_mode {
-    MODE_CROSS = 0,    // top-left "=" key: dark idle, white cross-shaped ripple
-    MODE_REACTIVE,     // dim-white idle + layer themes + round keypress ripple
-    MODE_SOLID,        // steady idle/theme colors, no keypress reaction
-    MODE_OFF,          // everything dark
-    MODE_COUNT,
+// ── Pattern / color state ─────────────────────────────────────────────────────
+enum lighting_pattern {
+    PAT_REACTIVE = 0,  // dim idle glow + round keypress ripple
+    PAT_CROSS,         // dark idle + white/colored cross flash on press
+    PAT_SOLID,         // steady idle glow, no reaction
+    PAT_OFF,           // everything dark
+    PAT_COUNT,
 };
 
-static uint8_t g_lighting_mode = MODE_REACTIVE;
+enum lighting_color {
+    COLOR_WHITE = 0,   // plain white
+    COLOR_GRADIENT,    // blue -> green -> yellow across x
+    COLOR_COUNT,
+};
+
+static uint8_t g_pattern = PAT_REACTIVE;  // boot defaults
+static uint8_t g_color   = COLOR_WHITE;
 
 void lighting_init(void) {
     // Start from a clean, static base so no saved rainbow animation shows through
@@ -61,13 +71,21 @@ void lighting_init(void) {
 }
 
 bool lighting_process_record(uint16_t keycode, keyrecord_t *record) {
-    if (keycode < LM_MODE_1 || keycode > LM_MODE_12) return true;  // not a lighting key
-    if (record->event.pressed) {
-        uint8_t sel = keycode - LM_MODE_1;         // 0-based mode index
-        if (sel < MODE_COUNT) g_lighting_mode = sel;
-        // higher keys are reserved: ignore, staying on the current mode
+    if (keycode >= LM_PAT_1 && keycode <= LM_PAT_6) {         // left half: pattern
+        if (record->event.pressed) {
+            uint8_t sel = keycode - LM_PAT_1;
+            if (sel < PAT_COUNT) g_pattern = sel;             // reserved keys ignored
+        }
+        return false;                                         // never emits a character
     }
-    return false;  // selector keys never emit a character
+    if (keycode >= LM_COL_1 && keycode <= LM_COL_6) {         // right half: color
+        if (record->event.pressed) {
+            uint8_t sel = keycode - LM_COL_1;
+            if (sel < COLOR_COUNT) g_color = sel;             // reserved keys ignored
+        }
+        return false;
+    }
+    return true;                                              // not a lighting key
 }
 
 // ── Keypress ripple ───────────────────────────────────────────────────────────
@@ -81,7 +99,7 @@ static uint16_t rgb_approx_dist(int16_t dx, int16_t dy) {
     return (uint16_t)mx + (uint16_t)((mn * 27) >> 6);
 }
 
-// Round splash (used by MODE_REACTIVE): how "hot" a given LED is right now
+// Round splash (used by PAT_REACTIVE): how "hot" a given LED is right now
 // (0 = at rest, 255 = peak of the wave), taken as the max over every recent
 // hit's expanding ripple. Returns 0 when keypress tracking is compiled out.
 static uint8_t rgb_splash_factor(uint8_t led_index) {
@@ -113,21 +131,28 @@ static uint8_t rgb_splash_factor(uint8_t led_index) {
 #endif
 }
 
-// Cross (used by MODE_CROSS): a keypress instantly lights the pressed key's
+// Cross (used by PAT_CROSS): a keypress instantly lights the pressed key's
 // entire row and column at once — no travelling wavefront, no distance falloff —
-// and the whole cross then fades out together over RGB_CROSS_FADE_MS. Returns
-// the fade level (0 = faded/at rest, 255 = just pressed) for this LED.
+// and the whole cross then fades out together over RGB_CROSS_FADE_MS. The row
+// arm is confined to the pressed key's own keyboard half, so a press never
+// throws a bar of light across onto the other hand. Returns the fade level
+// (0 = faded/at rest, 255 = just pressed) for this LED.
 static uint8_t rgb_cross_factor(uint8_t led_index) {
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
-    uint8_t lx = g_led_config.point[led_index].x;
-    uint8_t ly = g_led_config.point[led_index].y;
+    uint8_t lx  = g_led_config.point[led_index].x;
+    uint8_t ly  = g_led_config.point[led_index].y;
+    uint8_t mid = RGB_MATRIX_MAX_X / 2;                          // split between the halves
     uint8_t best = 0;
     for (uint8_t i = 0; i < g_last_hit_tracker.count; i++) {
-        int16_t dx = (int16_t)lx - (int16_t)g_last_hit_tracker.x[i];
+        uint8_t px = g_last_hit_tracker.x[i];
+        int16_t dx = (int16_t)lx - (int16_t)px;
         int16_t dy = (int16_t)ly - (int16_t)g_last_hit_tracker.y[i];
+        bool same_half = ((lx < mid) == (px < mid));
         // On the press's column (same x) or row (same y)? Full axis, no reach cap.
+        // The row only extends within the pressed key's half; the column is
+        // same-x so it can't cross over anyway.
         bool on_col = (dx <= RGB_CROSS_TOL && dx >= -RGB_CROSS_TOL);
-        bool on_row = (dy <= RGB_CROSS_TOL && dy >= -RGB_CROSS_TOL);
+        bool on_row = (dy <= RGB_CROSS_TOL && dy >= -RGB_CROSS_TOL) && same_half;
         if (!on_col && !on_row) continue;
 
         uint16_t tick = g_last_hit_tracker.tick[i];             // ms since the press
@@ -142,19 +167,39 @@ static uint8_t rgb_cross_factor(uint8_t led_index) {
 #endif
 }
 
-// Resting theme color for a key. Returns false when the key should be dark
-// (i.e. it does nothing on the active layer above base).
-static bool key_theme(uint8_t layer, uint8_t row, uint8_t col,
-                      uint8_t *r, uint8_t *g, uint8_t *b) {
-    if (layer != LIGHTING_BASE_LAYER) {
-        uint16_t kc = keymap_key_to_keycode(layer, (keypos_t){.row = row, .col = col});
-        if (kc == KC_TRANSPARENT || kc == KC_NO) return false;
+// ── Color ─────────────────────────────────────────────────────────────────────
+// Peak (full-brightness) color for a key under the active color mode. The
+// pattern later scales this by a brightness factor.
+static void color_for(uint8_t led_index, uint8_t *r, uint8_t *g, uint8_t *b) {
+    if (g_color == COLOR_GRADIENT) {
+        // Left half of the board: blue -> green. Right half: green -> yellow.
+        uint8_t x   = g_led_config.point[led_index].x;          // 0..RGB_MATRIX_MAX_X
+        uint8_t mid = RGB_MATRIX_MAX_X / 2;
+        if (x < mid) {
+            uint8_t t = (uint8_t)((uint16_t)x * 255 / mid);     // 0..255
+            *r = 0;
+            *g = t;
+            *b = 255 - t;
+        } else {
+            uint8_t t = (uint8_t)((uint16_t)(x - mid) * 255 / (RGB_MATRIX_MAX_X - mid));
+            *r = t;
+            *g = 255;
+            *b = 0;
+        }
+        return;
     }
-    if (layer >= LAYER_THEME_COUNT) layer = LIGHTING_BASE_LAYER;
-    *r = layer_theme[layer][0];
-    *g = layer_theme[layer][1];
-    *b = layer_theme[layer][2];
-    return true;
+    // COLOR_WHITE (default)
+    *r = 255;
+    *g = 255;
+    *b = 255;
+}
+
+// Whether a key should light at all on the active layer. On layers above base,
+// keys that do nothing (transparent / KC_NO) stay dark — a cheat-sheet view.
+static bool key_active(uint8_t layer, uint8_t row, uint8_t col) {
+    if (layer == LIGHTING_BASE_LAYER) return true;
+    uint16_t kc = keymap_key_to_keycode(layer, (keypos_t){.row = row, .col = col});
+    return !(kc == KC_TRANSPARENT || kc == KC_NO);
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
@@ -165,45 +210,63 @@ bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
             uint8_t index = g_led_config.matrix_co[row][col];
             if (index == NO_LED || index < led_min || index >= led_max) continue;
 
-            // Mode-selector indicator: on the base layer, the number-row keys
-            // show which lighting mode is active (dim white) vs. the rest (dark).
-            // This wins over the effect, so the row is always a readable switch.
+            // Selector indicators: on the base layer the top row shows the active
+            // pattern (left half) and active color (right half) as dim white; the
+            // rest of the row is dark. In the CROSS pattern the cross still sweeps
+            // this row like any other — when its fade is brighter than the resting
+            // indicator, the cross wins; otherwise the indicator floor shows through
+            // so the row stays a readable switch.
             if (layer == LIGHTING_BASE_LAYER) {
                 uint16_t bkc = keymap_key_to_keycode(LIGHTING_BASE_LAYER,
                                                      (keypos_t){.row = row, .col = col});
-                if (bkc >= LM_MODE_1 && bkc <= LM_MODE_12) {
-                    uint8_t v = ((bkc - LM_MODE_1) == g_lighting_mode) ? RGB_IDLE_VAL : 0;
-                    rgb_matrix_set_color(index, v, v, v);
+                bool is_pat = (bkc >= LM_PAT_1 && bkc <= LM_PAT_6);
+                bool is_col = (bkc >= LM_COL_1 && bkc <= LM_COL_6);
+                if (is_pat || is_col) {
+                    uint8_t sel_v = 0;  // resting indicator: dim white iff this is the active selection
+                    if (is_pat && (bkc - LM_PAT_1) == g_pattern) sel_v = RGB_IDLE_VAL;
+                    if (is_col && (bkc - LM_COL_1) == g_color)   sel_v = RGB_IDLE_VAL;
+
+                    if (g_pattern == PAT_CROSS) {
+                        uint8_t f = rgb_cross_factor(index);
+                        if (f > sel_v) {
+                            uint8_t cr, cg, cb;
+                            color_for(index, &cr, &cg, &cb);
+                            rgb_matrix_set_color(index,
+                                (uint8_t)((uint16_t)cr * f / 255),
+                                (uint8_t)((uint16_t)cg * f / 255),
+                                (uint8_t)((uint16_t)cb * f / 255));
+                            continue;
+                        }
+                    }
+                    rgb_matrix_set_color(index, sel_v, sel_v, sel_v);
                     continue;
                 }
             }
 
-            // CROSS: dark board; a keypress lights its whole row + column white,
-            // then the cross fades out.
-            if (g_lighting_mode == MODE_CROSS) {
-                uint8_t f = rgb_cross_factor(index);
-                rgb_matrix_set_color(index, f, f, f);
-                continue;
-            }
-
-            if (g_lighting_mode == MODE_OFF) {
+            if (g_pattern == PAT_OFF || !key_active(layer, row, col)) {
                 rgb_matrix_set_color(index, 0, 0, 0);
                 continue;
             }
 
-            uint8_t pr, pg, pb;
-            if (!key_theme(layer, row, col, &pr, &pg, &pb)) {
-                rgb_matrix_set_color(index, 0, 0, 0);
-                continue;
+            // Hue from the color mode …
+            uint8_t cr, cg, cb;
+            color_for(index, &cr, &cg, &cb);
+
+            // … brightness from the pattern mode.
+            uint16_t v;
+            if (g_pattern == PAT_CROSS) {
+                v = rgb_cross_factor(index);                    // 0 idle (dark) .. 255 on press
+            } else if (g_pattern == PAT_REACTIVE) {
+                uint8_t f = rgb_splash_factor(index);
+                v = RGB_IDLE_VAL + ((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255;
+            } else {                                            // PAT_SOLID
+                v = RGB_IDLE_VAL;
             }
 
-            // REACTIVE ramps brightness up on a keypress; SOLID stays at rest.
-            uint8_t  f = (g_lighting_mode == MODE_REACTIVE) ? rgb_splash_factor(index) : 0;
-            uint16_t v = RGB_IDLE_VAL + ((255 - RGB_IDLE_VAL) * (uint16_t)f) / 255;
             rgb_matrix_set_color(index,
-                (uint8_t)((uint16_t)pr * v / 255),
-                (uint8_t)((uint16_t)pg * v / 255),
-                (uint8_t)((uint16_t)pb * v / 255));
+                (uint8_t)((uint16_t)cr * v / 255),
+                (uint8_t)((uint16_t)cg * v / 255),
+                (uint8_t)((uint16_t)cb * v / 255));
         }
     }
     return false;

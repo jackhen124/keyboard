@@ -40,9 +40,10 @@ ALIASES = {
     "_______": "KC_TRNS",
     "XXXXXXX": "KC_NO",
     "_____": "KC_TRNS",
-    # Lighting-mode selectors (defined in lighting.h, not keymap.c). Give them
-    # short labels so the number row renders cleanly instead of "LM_MODE_n".
-    **{f"LM_MODE_{n}": f"LM{n}" for n in range(1, 11)},
+    # Lighting selectors (defined in lighting.h, not keymap.c). Give them short
+    # labels so the top row renders cleanly: P# = pattern, C# = color.
+    **{f"LM_PAT_{n}": f"P{n}" for n in range(1, 7)},
+    **{f"LM_COL_{n}": f"C{n}" for n in range(1, 7)},
 }
 
 

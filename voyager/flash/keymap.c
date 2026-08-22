@@ -14,7 +14,7 @@
 //   row3 L(6) row3 R(6) | thumbs: L-outer L-inner R-inner R-outer
 
 #include QMK_KEYBOARD_H
-#include "lighting.h"   // RGB lighting + the LM_MODE_* number-row selector keys
+#include "lighting.h"   // RGB lighting + the LM_PAT_*/LM_COL_* top-row selector keys
 
 enum layers {
     _BASE = 0,
@@ -60,13 +60,13 @@ enum custom_keycodes {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
-    // Top row: the ENTIRE row is now LIGHTING-MODE selectors (LM_MODE_1..12),
-    // not keys — type numbers from the _NUM layer; "=" lives on _SYM/_NUM and
-    // Backspace on the left thumb (TH_NAV). Left-to-right: LM_MODE_1 (top-left,
-    // was "=") is the cross-ripple mode; then reactive/solid/off, rest reserved.
-    // See lighting.c.
+    // Top row: the ENTIRE row is LIGHTING selectors, not keys — type numbers
+    // from the _NUM layer; "=" lives on _SYM/_NUM and Backspace on the left thumb
+    // (TH_NAV). The row is split into two independent selectors: the LEFT half
+    // (LM_PAT_1..6) picks the lighting PATTERN and the RIGHT half (LM_COL_1..6)
+    // picks the COLOR, chosen separately. See lighting.c.
     [_BASE] = LAYOUT_voyager(
-        LM_MODE_1, LM_MODE_2, LM_MODE_3, LM_MODE_4, LM_MODE_5, LM_MODE_6,  LM_MODE_7, LM_MODE_8, LM_MODE_9, LM_MODE_10, LM_MODE_11, LM_MODE_12,
+        LM_PAT_1, LM_PAT_2, LM_PAT_3, LM_PAT_4, LM_PAT_5, LM_PAT_6,  LM_COL_1, LM_COL_2, LM_COL_3, LM_COL_4, LM_COL_5, LM_COL_6,
         _______,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
         KC_ESC,   HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
         KC_LSFT,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
