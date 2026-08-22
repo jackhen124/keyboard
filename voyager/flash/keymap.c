@@ -155,7 +155,7 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
 
 #define RGB_IDLE_VAL       40    // resting brightness 0-255. Lower = darker. 0 = keys glow only when hit.
 #define RGB_SPLASH_RADIUS  42    // how far the pulse reaches, in QMK point units (~2 key-widths)
-#define RGB_SPLASH_MS      150   // time for the wavefront to travel out to RGB_SPLASH_RADIUS
+#define RGB_SPLASH_MS      320   // time for the wavefront to travel out to RGB_SPLASH_RADIUS
 #define RGB_REACT_MS       400   // how long each key stays lit after the wave passes it, then fades
 
 // Per-layer "peak" color = the full-brightness color a key flashes to (and the
