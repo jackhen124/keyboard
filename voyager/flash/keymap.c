@@ -149,3 +149,32 @@ const char chordal_hold_layout[MATRIX_ROWS][MATRIX_COLS] PROGMEM = LAYOUT_voyage
 // Tapping term is a single global value (see TAPPING_TERM in config.h); there is
 // no per-finger override. PERMISSIVE_HOLD + CHORDAL_HOLD, not a longer term, are
 // what keep slow-finger holds reliable.
+
+// ── Per-key tap-hold tuning for the thumb layer-taps ────────────────────────
+// The four thumbs settle as HOLD on the very next key PRESS, instead of waiting
+// for a nested release (PERMISSIVE_HOLD) or the 170 ms term — so hold-thumb +
+// press-arrow moves the cursor immediately, even mid-typing. Thumbs aren't
+// rolled like letters, and Flow Tap already forces the Space thumb to a tap
+// when pressed mid-word, so early holds are safe here. Everything else (the
+// HRMs) returns false and keeps the gentler global resolution.
+// If Space→letter rolls after a typing pause start misfiring into the Symbol
+// layer, drop TH_SYM from this list.
+bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case TH_NAV:
+        case TH_NUM:
+        case TH_MOU:
+        case TH_SYM:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// The Nav thumb's tap is Backspace, so QUICK_TAP_TERM was hijacking the common
+// "tap Bspc to correct, then immediately hold for the cursor layer" gesture
+// into auto-repeating Backspace. Disable quick tap on that key only; the other
+// thumbs keep tap-then-hold auto-repeat (held Space, held Del, etc.).
+uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
+    return keycode == TH_NAV ? 0 : QUICK_TAP_TERM;
+}

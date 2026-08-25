@@ -10,10 +10,13 @@
 #define TAPPING_TERM 170
 // Tap-then-hold auto-repeat. If you re-press a tap-hold key within this window
 // of tapping it, the second press is a real tap you can hold to auto-repeat
-// (held Backspace to bulk-delete, held Space, etc.) — matching the Glove80's
-// *_REPEAT_DECAY. 120 ms is short enough that a deliberate hold-for-mod after a
-// pause still registers as the hold, so HRMs are unaffected.
+// (held Space, held Del, etc.) — matching the Glove80's *_REPEAT_DECAY. 120 ms
+// is short enough that a deliberate hold-for-mod after a pause still registers
+// as the hold, so HRMs are unaffected. The Nav thumb opts OUT per-key (see
+// QUICK_TAP_TERM_PER_KEY below): its tap is Backspace, and quick-tap was
+// locking out the cursor layer right after correcting a typo.
 #define QUICK_TAP_TERM 120
+#define QUICK_TAP_TERM_PER_KEY   // get_quick_tap_term() in keymap.c: 0 for TH_NAV
 
 // Bilateral holds. A home-row mod engages only if the NEXT key is on the
 // OPPOSITE hand; same-hand rolls (sd, df, as…) stay letters. This is Sunaku's
@@ -32,6 +35,14 @@
 // coming through as a base "k"). Safe globally because CHORDAL_HOLD still vetoes
 // same-hand rolls, so early holds only fire on opposite-hand or exempt thumbs.
 #define PERMISSIVE_HOLD
+
+// Thumb layer-taps settle as HOLD the moment ANY other key is PRESSED — no
+// waiting for that key's release (PERMISSIVE_HOLD) or the 170 ms term. This is
+// what makes the layers feel instant mid-typing: hold thumb, press arrow, the
+// arrow moves on the press. Applied per-key (get_hold_on_other_key_press() in
+// keymap.c) to the four thumbs only; letters/HRMs keep the gentler
+// PERMISSIVE_HOLD + CHORDAL_HOLD resolution above.
+#define HOLD_ON_OTHER_KEY_PRESS_PER_KEY
 
 // ── RGB Matrix: action-reactive lighting ────────────────────────────────────
 // RGB_MATRIX is already enabled by the Voyager's data-driven config; we only
