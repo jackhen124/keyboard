@@ -178,3 +178,20 @@ bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
 uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
     return keycode == TH_NAV ? 0 : QUICK_TAP_TERM;
 }
+
+// Flow Tap forces a tap-hold key to TAP when it's pressed within FLOW_TAP_TERM
+// of the previous key — great for killing mid-word HRM/layer misfires, but it
+// also defeats a DELIBERATE hold done right after typing: pressing Space to
+// enter the Symbol layer immediately after a letter was being force-tapped, and
+// since the thumb stays down the OS auto-repeated the space. The decision is
+// made at press time and ignores hold duration, so the layer never engaged.
+//
+// Shorten the flow window for the Symbol thumb only: 60 ms still catches genuine
+// finger-overlap rolls (space→letter starting a new word) but is short enough
+// that any intentional hold-after-typing gets past it and activates the layer.
+// Raise toward the global 150 if rolls start misfiring into symbols; lower to 0
+// to disable Flow Tap on this key entirely. Other keys keep the global term.
+uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
+    if (keycode == TH_SYM) return 60;
+    return FLOW_TAP_TERM;
+}
