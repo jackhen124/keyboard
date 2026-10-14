@@ -1,0 +1,50 @@
+name: Build Glove80 firmware
+
+on:
+  push:
+    paths:
+      - "glove80/**"
+      - ".github/workflows/build-glove80.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Checkout MoErgo ZMK
+        uses: actions/checkout@v4
+        with:
+          repository: moergo-sc/zmk
+          # Pin the firmware source; update deliberately when upgrading ZMK.
+          ref: ce69e85f585c724142aae37ddf8a7e019ff19e93
+          path: src
+
+      # Follow MoErgo's official glove80-zmk-config Nix build and public cache.
+      - name: Install Nix
+        uses: cachix/install-nix-action@v25
+
+      - name: Configure MoErgo build cache
+        uses: cachix/cachix-action@v14
+        with:
+          name: moergo-glove80-zmk-dev
+          skipPush: true
+
+      - name: Compile both halves and combine firmware
+        run: nix-build glove80 -o combined
+
+      - name: Copy firmware out of the Nix store
+        run: cp combined/glove80.uf2 glove80.uf2
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glove80-jack-firmware
+          path: glove80.uf2
+          if-no-files-found: error
