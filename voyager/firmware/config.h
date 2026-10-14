@@ -44,6 +44,10 @@
 // PERMISSIVE_HOLD + CHORDAL_HOLD resolution above.
 #define HOLD_ON_OTHER_KEY_PRESS_PER_KEY
 
+// Outer home-row Shift keys: tap for the next key, hold for ordinary Shift.
+// Match the Glove80's existing sticky Shift expiration.
+#define ONESHOT_TIMEOUT 500
+
 // ── RGB Matrix: action-reactive lighting ────────────────────────────────────
 // RGB_MATRIX is already enabled by the Voyager's data-driven config; we only
 // need to opt into keypress tracking. RGB_MATRIX_KEYPRESSES turns on QMK's

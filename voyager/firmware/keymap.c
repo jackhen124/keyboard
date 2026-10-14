@@ -68,21 +68,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [_BASE] = LAYOUT_voyager(
         LM_PAT_1, LM_PAT_2, LM_PAT_3, LM_PAT_4, LM_PAT_5, LM_PAT_6,  LM_COL_1, LM_COL_2, LM_COL_3, LM_COL_4, LM_COL_5, LM_COL_6,
         _______,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    KC_MINS,
-        KC_ESC,   HM_A,    HM_S,    HM_D,    HM_F,    KC_G,        KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   KC_QUOT,
+        OSM(MOD_LSFT), HM_A, HM_S, HM_D, HM_F, KC_G,             KC_H,    HM_J,    HM_K,    HM_L,    HM_SC,   OSM(MOD_RSFT),
         KC_LSFT,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
                                             TH_NAV,  TH_NUM,      TH_MOU,  TH_SYM
     ),
 
-    // Symbols. Faithful mirror of the Glove80 "Glorious Engrammer" Symbol layer:
-    // left hand types symbols while the right-outer thumb (Space) holds the layer;
-    // the right hand keeps whitespace/editing keys. The Glove80's 6th (bottom) row has no home
-    // on the 4-row Voyager, so its five orphaned symbols (@ % & + :) are rescued
-    // onto the otherwise-empty right half of the number row.
+    // Symbols. Hold the right-outer thumb (Space). Quotes and backtick live on
+    // J/K/L; ampersand lives on the physical dot/greater-than key.
     [_SYM] = LAYOUT_voyager(
         TRIPLE_GRV, KC_GRV,  KC_LABK, KC_RABK, KC_SCLN, KC_COMM,     _______, _______, _______, _______, KC_COLN, _______,
         KC_EXLM,    KC_LBRC, KC_LCBR, KC_RCBR, KC_RBRC, KC_QUES,     KC_DOT,  KC_DEL,  LSFT(KC_TAB), KC_INS, KC_ESC, _______,
-        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT,   KC_BSPC, _______, KC_SPC,  _______, KC_GRV,
-        KC_TILD,    KC_LPRN, KC_PIPE, KC_MINS, KC_RPRN, KC_SLSH,     KC_AMPR, KC_PERC, KC_PLUS, KC_GRV,  KC_BSLS, _______,
+        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT,   KC_QUOT, KC_DQUO, KC_GRV,  _______, KC_GRV,
+        KC_TILD,    KC_LPRN, KC_PIPE, KC_MINS, KC_RPRN, KC_SLSH,     _______, KC_PERC, KC_PLUS, KC_AMPR, KC_BSLS, _______,
                                             _______, _______,     _______, _______
     ),
 
@@ -109,11 +106,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Hold right-inner thumb (Tab): move the pointer with the LEFT hand
     // (E=up, S/D/F=left/down/right), click with the RIGHT (U/I/O = L/M/R), scroll
     // on the outer columns, and cut/copy/paste on Z/X/C. QK_BOOT stays top-left
-    // for entering the bootloader to flash. Enter is on K (right middle finger).
+    // for entering the bootloader to flash. Escape/Enter are on J/K.
     [_MOUSE] = LAYOUT_voyager(
         QK_BOOT, _______, _______,  _______, _______, _______,     _______, _______, _______,      _______,      _______, _______,
         _______, _______, MS_WHLL,  MS_UP,   MS_WHLR, _______,     MS_WHLL, MS_BTN1, MS_BTN3,      MS_BTN2,      MS_WHLR, _______,
-        KC_ESC,  MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, _______, KC_ENT,       _______,      KC_APP,  MS_BTN4,
+        _______, MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, KC_ESC,  KC_ENT,       _______,      KC_APP,  MS_BTN4,
         _______, MS_WHLD, KC_CUT,   KC_COPY, KC_PSTE, MS_WHLD,     MS_WHLD, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  MS_BTN5,
                                              MS_BTN1, MS_BTN2,     _______, _______
     ),

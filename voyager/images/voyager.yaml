@@ -25,7 +25,7 @@ layers:
   - O
   - P
   - '-'
-  - ESC
+  - {t: LSFT, h: sticky}
   - {t: A, h: LGUI}
   - {t: S, h: LALT}
   - {t: D, h: LCTL}
@@ -36,7 +36,7 @@ layers:
   - {t: K, h: RCTL}
   - {t: L, h: RALT}
   - {t: ;, h: RGUI}
-  - ''''
+  - {t: RSFT, h: sticky}
   - LSFT
   - Z
   - X
@@ -85,10 +85,10 @@ layers:
   - $
   - '*'
   - '@'
-  - BSPC
-  - ENT
-  - SPC
-  - ENT
+  - ''''
+  - '"'
+  - '`'
+  - {t: ▽, type: trans}
   - '`'
   - '~'
   - (
@@ -96,10 +96,10 @@ layers:
   - '-'
   - )
   - /
-  - '&'
+  - {t: ▽, type: trans}
   - '%'
   - +
-  - '`'
+  - '&'
   - \
   - {t: ▽, type: trans}
   - {t: ▽, type: trans}
@@ -237,15 +237,15 @@ layers:
   - MS BTN2
   - MS WHLR
   - {t: ▽, type: trans}
-  - ESC
+  - {t: ▽, type: trans}
   - MS WHLU
   - MS LEFT
   - MS DOWN
   - MS RGHT
   - MS WHLU
   - MS WHLU
-  - {t: ▽, type: trans}
-  - {t: ▽, type: trans}
+  - ESC
+  - ENT
   - {t: ▽, type: trans}
   - APP
   - MS BTN4
