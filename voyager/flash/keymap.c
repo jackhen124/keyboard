@@ -190,8 +190,11 @@ uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
 // finger-overlap rolls (space→letter starting a new word) but is short enough
 // that any intentional hold-after-typing gets past it and activates the layer.
 // Raise toward the global 150 if rolls start misfiring into symbols; lower to 0
-// to disable Flow Tap on this key entirely. Other keys keep the global term.
+// to disable Flow Tap on this key entirely.
+// Disable Flow Tap for the Number thumb so deliberate holds immediately after
+// typing can activate the layer. Other keys keep the global term.
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
+    if (keycode == TH_NUM) return 0;
     if (keycode == TH_SYM) return 60;
     return FLOW_TAP_TERM;
 }
