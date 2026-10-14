@@ -74,14 +74,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     ),
 
     // Symbols. Faithful mirror of the Glove80 "Glorious Engrammer" Symbol layer:
-    // left hand types symbols while the right-outer thumb (Enter) holds the layer;
+    // left hand types symbols while the right-outer thumb (Space) holds the layer;
     // the right hand keeps whitespace/editing keys. The Glove80's 6th (bottom) row has no home
     // on the 4-row Voyager, so its five orphaned symbols (@ % & + :) are rescued
     // onto the otherwise-empty right half of the number row.
     [_SYM] = LAYOUT_voyager(
         TRIPLE_GRV, KC_GRV,  KC_LABK, KC_RABK, KC_SCLN, KC_COMM,     _______, _______, _______, _______, KC_COLN, _______,
         KC_EXLM,    KC_LBRC, KC_LCBR, KC_RCBR, KC_RBRC, KC_QUES,     KC_DOT,  KC_DEL,  LSFT(KC_TAB), KC_INS, KC_ESC, _______,
-        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT,   KC_BSPC, KC_ENT,  KC_SPC,  KC_ENT,  KC_GRV,
+        KC_HASH,    KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR,  KC_ASTR,     KC_AT,   KC_BSPC, _______, KC_SPC,  _______, KC_GRV,
         KC_TILD,    KC_LPRN, KC_PIPE, KC_MINS, KC_RPRN, KC_SLSH,     KC_AMPR, KC_PERC, KC_PLUS, KC_GRV,  KC_BSLS, _______,
                                             _______, _______,     _______, _______
     ),
@@ -106,14 +106,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     // Mouse. Ported from the Glove80 "Glorious Engrammer" Mouse layer, collapsed
     // to a single speed (its slow/fast/warp graded layers have no home here).
-    // Hold right-inner thumb (Space): move the pointer with the LEFT hand
+    // Hold right-inner thumb (Tab): move the pointer with the LEFT hand
     // (E=up, S/D/F=left/down/right), click with the RIGHT (U/I/O = L/M/R), scroll
     // on the outer columns, and cut/copy/paste on Z/X/C. QK_BOOT stays top-left
-    // for entering the bootloader to flash.
+    // for entering the bootloader to flash. Enter is on K (right middle finger).
     [_MOUSE] = LAYOUT_voyager(
         QK_BOOT, _______, _______,  _______, _______, _______,     _______, _______, _______,      _______,      _______, _______,
         _______, _______, MS_WHLL,  MS_UP,   MS_WHLR, _______,     MS_WHLL, MS_BTN1, MS_BTN3,      MS_BTN2,      MS_WHLR, _______,
-        KC_ESC,  MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, _______, _______,      _______,      KC_APP,  MS_BTN4,
+        KC_ESC,  MS_WHLU, MS_LEFT,  MS_DOWN, MS_RGHT, MS_WHLU,     MS_WHLU, _______, KC_ENT,       _______,      KC_APP,  MS_BTN4,
         _______, MS_WHLD, KC_CUT,   KC_COPY, KC_PSTE, MS_WHLD,     MS_WHLD, KC_F13,  LSFT(KC_F13), LALT(KC_F13), KC_F16,  MS_BTN5,
                                              MS_BTN1, MS_BTN2,     _______, _______
     ),
@@ -191,10 +191,10 @@ uint16_t get_quick_tap_term(uint16_t keycode, keyrecord_t *record) {
 // that any intentional hold-after-typing gets past it and activates the layer.
 // Raise toward the global 150 if rolls start misfiring into symbols; lower to 0
 // to disable Flow Tap on this key entirely.
-// Disable Flow Tap for the Number thumb so deliberate holds immediately after
+// Disable Flow Tap for the Number and Mouse thumbs so holds immediately after
 // typing can activate the layer. Other keys keep the global term.
 uint16_t get_flow_tap_term(uint16_t keycode, keyrecord_t *record, uint16_t prev_keycode) {
-    if (keycode == TH_NUM) return 0;
+    if (keycode == TH_NUM || keycode == TH_MOU) return 0;
     if (keycode == TH_SYM) return 60;
     return FLOW_TAP_TERM;
 }
