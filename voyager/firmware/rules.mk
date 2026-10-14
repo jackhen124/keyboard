@@ -1,7 +1,7 @@
 # Voyager features are defined in the keyboard's data-driven config.
 MOUSEKEY_ENABLE = yes   # required for the _MOUSE layer (KC_MS_*, KC_BTN*, KC_WH_*)
 
-# RGB lighting lives in its own module (voyager/flash/lighting/), separated by
+# RGB lighting lives in its own module (voyager/firmware/lighting/), separated by
 # concern: controller (state + selector keys), patterns (brightness), colors
 # (hue), and the render loop that combines them. keymap.c only includes
 # lighting/lighting.h.

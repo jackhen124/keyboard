@@ -3,7 +3,7 @@ name: Draw keymap images
 on:
   push:
     paths:
-      - "voyager/flash/keymap.c"
+      - "voyager/firmware/keymap.c"
       - "voyager/gen-keymap-images.py"
       - ".github/workflows/draw-keymap.yml"
   workflow_dispatch:
@@ -39,7 +39,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add images voyager/voyager.keymap.json
+          git add voyager/images voyager/voyager.keymap.json
           if git diff --cached --quiet; then
             echo "No image changes to commit."
           else

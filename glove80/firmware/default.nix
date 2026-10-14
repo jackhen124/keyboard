@@ -6,12 +6,12 @@ let
   config = ./.;
   left = firmware.zmk.override {
     board = "glove80_lh";
-    keymap = "${config}/keymap.keymap";
+    keymap = "${config}/layout.keymap";
     kconfig = "${config}/config.conf";
   };
   right = firmware.zmk.override {
     board = "glove80_rh";
-    keymap = "${config}/keymap.keymap";
+    keymap = "${config}/layout.keymap";
     kconfig = "${config}/config.conf";
   };
 in

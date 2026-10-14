@@ -3,7 +3,7 @@ name: Build Glove80 firmware
 on:
   push:
     paths:
-      - "glove80/flash/**"
+      - "glove80/firmware/**"
       - ".github/workflows/build-glove80.yml"
   workflow_dispatch:
 
@@ -37,7 +37,7 @@ jobs:
           skipPush: true
 
       - name: Compile both halves and combine firmware
-        run: nix-build glove80/flash -o combined
+        run: nix-build glove80/firmware -o combined
 
       - name: Copy firmware out of the Nix store
         run: cp combined/glove80.uf2 glove80.uf2

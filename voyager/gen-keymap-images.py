@@ -27,9 +27,9 @@ from pathlib import Path
 # Config -- adjust here if you rename files or move to another board.
 # ---------------------------------------------------------------------------
 REPO = Path(__file__).resolve().parent.parent          # keyboard/
-KEYMAP_C = REPO / "voyager" / "flash" / "keymap.c"
+KEYMAP_C = REPO / "voyager" / "firmware" / "keymap.c"
 JSON_OUT = REPO / "voyager" / "voyager.keymap.json"
-IMG_DIR = REPO / "images"
+IMG_DIR = REPO / "voyager" / "images"
 QMK_KEYBOARD = "zsa/voyager"     # used by keymap-drawer to fetch the physical layout
 QMK_LAYOUT = "LAYOUT"            # the layout name in keymap-drawer's info.json for this board
 
@@ -203,7 +203,7 @@ def main() -> None:
         with (layers_dir / f"{disp}.svg").open("w", encoding="utf-8") as f:
             kd("draw", str(yaml_path), "-s", disp, stdout=f)
 
-    print(f"rendered images/voyager.svg + images/layers/{{{','.join(display_names)}}}.svg")
+    print(f"rendered voyager/images/voyager.svg + voyager/images/layers/{{{','.join(display_names)}}}.svg")
 
 
 if __name__ == "__main__":
